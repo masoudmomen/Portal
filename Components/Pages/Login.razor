@@ -1,0 +1,62 @@
+﻿@page "/login"
+@layout NullLayout
+@rendermode InteractiveServer
+@using MudBlazor;
+
+
+<MudPaper Class="login-container" Elevation="6">
+
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-6">
+        Company Portal
+    </MudText>
+
+    <MudTextField @bind-Value="username"
+                  Label="Username"
+                  Variant="Variant.Outlined"
+                  FullWidth="true" />
+
+    <MudTextField @bind-Value="password"
+                  Label="Password"
+                  InputType="InputType.Password"
+                  Variant="Variant.Outlined"
+                  FullWidth="true"
+                  Class="mt-3" />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               FullWidth="true"
+               Class="mt-5"
+               OnClick="LoginUser">
+        Login
+    </MudButton>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <MudText Color="Color.Error" Class="mt-3">
+            @error
+        </MudText>
+    }
+
+</MudPaper>
+
+@code {
+    private string? username;
+    private string? password;
+    private string? error;
+
+    private async Task LoginUser()
+    {
+        if (username == "admin" && password == "1234")
+        {
+            Navigation.NavigateTo("/", true);
+        }
+        else
+        {
+            error = "Invalid credentials";
+        }
+        await Task.CompletedTask;
+    }
+
+    [Inject]
+    private NavigationManager? Navigation { get; set; } 
+}

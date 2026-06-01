@@ -1,0 +1,62 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+@using MudBlazor
+
+<MudText Typo="Typo.h4" Class="mb-4">
+    Dashboard Overview
+</MudText>
+
+<MudGrid Spacing="3">
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText>Open Visions</MudText>
+            <MudText Typo="Typo.h5">5</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText>Active Projects</MudText>
+            <MudText Typo="Typo.h5">8</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText>Open Tasks</MudText>
+            <MudText Typo="Typo.h5">21</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText>Reports Today</MudText>
+            <MudText Typo="Typo.h5">4</MudText>
+        </MudPaper>
+    </MudItem>
+
+</MudGrid>
+<MudPaper Class="pa-4 mt-6" Elevation="2">
+
+    <MudText Typo="Typo.h6">
+        Recent Activity
+    </MudText>
+
+    <MudList T="string" Dense="true">
+
+        <MudListItem>
+            Ali created a new task
+        </MudListItem>
+
+        <MudListItem>
+            Project X updated
+        </MudListItem>
+
+        <MudListItem>
+            Leave request approved
+        </MudListItem>
+
+    </MudList>
+
+</MudPaper>
