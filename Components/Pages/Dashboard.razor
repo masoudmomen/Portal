@@ -1,62 +1,66 @@
 ﻿@page "/dashboard"
-@rendermode InteractiveServer
-@using MudBlazor
+@layout MainLayout
 
-<MudText Typo="Typo.h4" Class="mb-4">
-    Dashboard Overview
-</MudText>
+<div class="dashboard-page">
 
-<MudGrid Spacing="3">
+    <div class="top-header">
 
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4">
-            <MudText>Open Visions</MudText>
-            <MudText Typo="Typo.h5">5</MudText>
-        </MudPaper>
-    </MudItem>
+        <div>
+            <div class="greeting">
+                Pacific MEP Engineering
+            </div>
 
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4">
-            <MudText>Active Projects</MudText>
-            <MudText Typo="Typo.h5">8</MudText>
-        </MudPaper>
-    </MudItem>
+            <p class="greeting">
+                Project Management Dashboard
+            </p>
+        </div>
 
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4">
-            <MudText>Open Tasks</MudText>
-            <MudText Typo="Typo.h5">21</MudText>
-        </MudPaper>
-    </MudItem>
+        <img src="https://i.pravatar.cc/100"
+             class="profile-image" />
+    </div>
 
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4">
-            <MudText>Reports Today</MudText>
-            <MudText Typo="Typo.h5">4</MudText>
-        </MudPaper>
-    </MudItem>
+    <div class="stats-grid">
 
-</MudGrid>
-<MudPaper Class="pa-4 mt-6" Elevation="2">
+        <div class="stat-card">
+            <div class="stat-number">12</div>
+            <div class="stat-title">Projects</div>
+        </div>
 
-    <MudText Typo="Typo.h6">
-        Recent Activity
-    </MudText>
+        <div class="stat-card">
+            <div class="stat-number">38</div>
+            <div class="stat-title">Tasks</div>
+        </div>
 
-    <MudList T="string" Dense="true">
+        <div class="stat-card">
+            <div class="stat-number">7</div>
+            <div class="stat-title">Reports</div>
+        </div>
 
-        <MudListItem>
-            Ali created a new task
-        </MudListItem>
+        <div class="stat-card">
+            <div class="stat-number">5</div>
+            <div class="stat-title">Visions</div>
+        </div>
 
-        <MudListItem>
-            Project X updated
-        </MudListItem>
+    </div>
 
-        <MudListItem>
-            Leave request approved
-        </MudListItem>
+    <div class="section-card">
 
-    </MudList>
+        <div class="section-title">
+            Recent Activities
+        </div>
 
-</MudPaper>
+        <div class="activity-item">
+            New report submitted
+        </div>
+
+        <div class="activity-item">
+            Task completed
+        </div>
+
+        <div class="activity-item">
+            Vision updated
+        </div>
+
+    </div>
+
+</div>

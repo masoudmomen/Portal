@@ -1,89 +1,11 @@
 ﻿@inherits LayoutComponentBase
-@using MudBlazor
 
+<div class="app-shell">
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+    <main class="main-content">
+        @Body
+    </main>
 
-<MudLayout>
+   <NavMenu />
 
-    <!-- Sidebar -->
-    <MudDrawer @bind-Open="_drawerOpen"
-               Variant="DrawerVariant.Mini"
-               Elevation="1"
-               Class="pa-2">
-
-        <MudNavMenu Dense="true">
-
-            <MudText Typo="Typo.h6" Class="pa-2">
-                Portal
-            </MudText>
-
-            <MudDivider />
-
-            <MudNavLink Href="/" Match="NavLinkMatch.All">
-                Dashboard
-            </MudNavLink>
-
-            <MudNavLink Href="/projects">
-                Projects
-            </MudNavLink>
-
-            <MudNavLink Href="/employees">
-                Employees
-            </MudNavLink>
-
-            <MudNavLink Href="/leaves">
-                Leaves
-            </MudNavLink>
-
-            <MudNavLink Href="/reports">
-                Reports
-            </MudNavLink>
-
-        </MudNavMenu>
-
-    </MudDrawer>
-
-    <!-- Main Content -->
-    <MudMainContent>
-
-        <!-- Header -->
-        <MudAppBar Elevation="1">
-
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                           Color="Color.Inherit"
-                           OnClick="ToggleDrawer" />
-
-            <MudText Typo="Typo.h6" Class="ml-2">
-                Company Portal
-            </MudText>
-
-            <MudSpacer />
-
-            <MudIconButton Icon="@Icons.Material.Filled.DarkMode" />
-
-            <MudAvatar Size="Size.Medium">
-                U
-            </MudAvatar>
-
-        </MudAppBar>
-
-        <!-- Page Content -->
-        <div class="pa-4">
-            @Body
-        </div>
-
-    </MudMainContent>
-
-</MudLayout>
-
-@code {
-    private bool _drawerOpen = true;
-
-    private void ToggleDrawer()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-}
+</div>

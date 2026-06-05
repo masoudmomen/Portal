@@ -1,24 +1,38 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Portal</a>
-    </div>
-</div>
+﻿<nav class="bottom-nav">
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <a href="/" class="nav-item active">
+        <svg viewBox="0 0 24 24">
+            <path d="M3 10L12 3L21 10V21H3Z" />
+        </svg>
+        <span>Dashboard</span>
+    </a>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <a href="/projects" class="nav-item">
+        <svg viewBox="0 0 24 24">
+            <path d="M3 6H21V18H3Z" />
+        </svg>
+        <span>Projects</span>
+    </a>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    <a href="/actions" class="nav-item">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 5V19M5 12H19" />
+        </svg>
+        <span>Actions</span>
+    </a>
 
+    <a href="/tasks" class="nav-item">
+        <svg viewBox="0 0 24 24">
+            <path d="M4 6H20M4 12H20M4 18H20" />
+        </svg>
+        <span>Tasks</span>
+    </a>
+
+    <a href="/reports" class="nav-item">
+        <svg viewBox="0 0 24 24">
+            <path d="M6 3H18V21H6Z" />
+        </svg>
+        <span>Reports</span>
+    </a>
+
+</nav>
