@@ -1,0 +1,193 @@
+﻿@rendermode InteractiveServer
+
+@if (IsVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal d-block fade show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+
+                <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold fs-4">
+                        @(IsEditMode ? "Edit Project" : "Create New Project")
+                    </h5>
+
+                    <button type="button" class="btn-close" @onclick="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <EditForm Model="@projectModel" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Project ID</label>
+
+                                @if (IsEditMode)
+                                {
+                                    <input type="text"
+                                           class="form-control custom-input"
+                                           @bind="projectModel.ProjectID"
+                                           disabled />
+                                }
+                                else
+                                {
+                                    <input type="text"
+                                           class="form-control custom-input"
+                                           @bind="projectModel.ProjectID" />
+                                }
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Project Type</label>
+
+                                <select class="form-select custom-input" @bind="projectModel.Type">
+                                    <option value="MEP">MEP Engineering</option>
+                                    <option value="Civil">Civil</option>
+                                    <option value="Electrical">Electrical</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Project Name</label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       @bind="projectModel.Name" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Project Address</label>
+
+                                <textarea class="form-control custom-input"
+                                          rows="2"
+                                          @bind="projectModel.Address"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Project Manager</label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       @bind="projectModel.ProjectManager" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Lead Engineer</label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       @bind="projectModel.Engineer" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Due Date</label>
+
+                                <input type="date"
+                                       class="form-control custom-input"
+                                       @bind="projectModel.DueDate" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Progress (%)</label>
+
+                                <input type="number"
+                                       class="form-control custom-input"
+                                       @bind="projectModel.Progress"
+                                       min="0"
+                                       max="100" />
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-top-0 pt-4 px-0 d-flex justify-content-end gap-2">
+                            <button type="button"
+                                    class="btn btn-light px-4"
+                                    @onclick="Close">
+                                Cancel
+                            </button>
+
+                            <button type="submit"
+                                    class="@SubmitButtonCssClass">
+                                @(IsEditMode ? "Save Changes" : "Create Project")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public ProjectModel? ExistingProject { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ProjectModel> OnSave { get; set; }
+
+    private ProjectModel projectModel = new();
+
+    private bool IsEditMode => ExistingProject != null;
+
+    private string SubmitButtonCssClass =>
+        $"btn {(IsEditMode ? "btn-warning" : "btn-primary")} px-4 shadow-sm";
+
+    protected override void OnParametersSet()
+    {
+        if (!IsVisible)
+            return;
+
+        projectModel = ExistingProject is null
+            ? CreateDefaultProject()
+            : CloneProject(ExistingProject);
+    }
+
+    private static ProjectModel CreateDefaultProject()
+    {
+        return new ProjectModel
+        {
+            Type = "MEP",
+            DueDate = DateTime.Now.AddMonths(3),
+            Progress = 0
+        };
+    }
+
+    private static ProjectModel CloneProject(ProjectModel source)
+    {
+        return new ProjectModel
+        {
+            ProjectID = source.ProjectID,
+            Name = source.Name,
+            Type = source.Type,
+            Address = source.Address,
+            ProjectManager = source.ProjectManager,
+            Engineer = source.Engineer,
+            DueDate = source.DueDate,
+            Progress = source.Progress
+        };
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        await OnSave.InvokeAsync(projectModel);
+    }
+
+    public class ProjectModel
+    {
+        public string ProjectID { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "MEP";
+        public string Address { get; set; } = "";
+        public string ProjectManager { get; set; } = "";
+        public string Engineer { get; set; } = "";
+        public DateTime DueDate { get; set; } = DateTime.Now.AddMonths(3);
+        public int Progress { get; set; }
+    }
+}

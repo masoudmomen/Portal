@@ -1,0 +1,33 @@
+﻿/* Modal Customization */
+.modal-content {
+    border-radius: 24px; /* گوشه‌های بسیار نرم برای ظاهر مدرن */
+    overflow: hidden;
+}
+
+/* Custom Input Fields */
+.custom-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    background-color: #f8fafc;
+}
+
+    .custom-input:focus {
+        background-color: #fff;
+        border-color: #3766ff;
+        box-shadow: 0 0 0 4px rgba(55, 102, 255, 0.1);
+        outline: none;
+    }
+
+/* Label Styling */
+.form-label {
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+}
+
+/* Backdrop Blur (اگر مرورگر پشتیبانی کند) */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+    background-color: rgba(15, 23, 42, 0.5); /* رنگ تیره و شفاف */
+}

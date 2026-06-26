@@ -1,0 +1,399 @@
+﻿@page "/reports"
+@layout MainLayout
+@rendermode InteractiveServer
+@using Portal.Components.PartialComponents
+@using Portal.Models
+
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark">Reports Management</h2>
+        <p class="text-muted">Submit, review and track all team work reports</p>
+    </div>
+    <button class="btn btn-primary btn-lg shadow-sm d-flex align-items-center gap-2" @onclick="OpenCreateReportModal">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        New Report
+    </button>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 summary-card" @onclick="() => FilterByCategory(ReportFilterCategory.Unread)" role="button">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="summary-icon bg-soft-primary text-primary rounded-3 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-envelope fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-bold">Unread</div>
+                    <div class="fs-4 fw-bold text-dark">@GetCountByCategory(ReportFilterCategory.Unread)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 summary-card" @onclick="() => FilterByCategory(ReportFilterCategory.Today)" role="button">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="summary-icon bg-soft-info text-info rounded-3 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-calendar-day fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-bold">Today</div>
+                    <div class="fs-4 fw-bold text-dark">@GetCountByCategory(ReportFilterCategory.Today)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 summary-card" @onclick="() => FilterByCategory(ReportFilterCategory.ThisWeek)" role="button">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="summary-icon bg-soft-warning text-warning rounded-3 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-calendar-week fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-bold">This Week</div>
+                    <div class="fs-4 fw-bold text-dark">@GetCountByCategory(ReportFilterCategory.ThisWeek)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 summary-card" @onclick="() => FilterByCategory(ReportFilterCategory.PendingReview)" role="button">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="summary-icon bg-soft-danger text-danger rounded-3 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-hourglass-split fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-bold">Pending Review</div>
+                    <div class="fs-4 fw-bold text-dark">@GetCountByCategory(ReportFilterCategory.PendingReview)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group search-group">
+                    <input type="text" class="form-control border-end-0" 
+                           placeholder="Search by Title, Reporter or Department..."
+                           @bind="searchTerm" />
+                    <button class="btn btn-outline-primary border-start-0 px-3" type="button">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="d-flex gap-2 flex-wrap">
+                    <select class="form-select filter-select" @bind="filterStatus">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+
+                    <select class="form-select filter-select" @bind="filterDepartment">
+                        <option value="All">All Departments</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Design">Design</option>
+                        <option value="Operations">Operations</option>
+                    </select>
+
+                    @if (activeCategory != ReportFilterCategory.None)
+                    {
+                        <button class="btn btn-outline-secondary px-3" @onclick="ClearCategoryFilter">
+                            <i class="bi bi-x-circle me-1"></i> Clear Filter: @activeCategory
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports List -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">
+            Reports
+            @if (activeCategory != ReportFilterCategory.None)
+            {
+                <span class="badge bg-soft-primary text-primary ms-2">@activeCategory</span>
+            }
+        </h5>
+        <span class="text-muted small">@filteredReports.Count() reports</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Report ID</th>
+                    <th>Title & Description</th>
+                    <th>Reporter</th>
+                    <th>Department</th>
+                    <th>Report Date</th>
+                    <th>Status</th>
+                    <th>Read</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var report in filteredReports)
+                {
+                    <tr class="@(!report.IsRead ? "fw-semibold" : "")">
+                        <td class="ps-4 fw-bold text-primary">@report.ReportId</td>
+                        <td style="max-width: 300px;">
+                            <div class="fw-bold text-truncate">@report.Title</div>
+                            <div class="small text-muted text-truncate">@report.Description</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="https://i.pravatar.cc/30?u=@report.ReporterId" class="rounded-circle" alt="avatar" />
+                                <span>@report.Reporter</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark">@report.Department</span></td>
+                        <td>@report.ReportDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @switch (report.Status)
+                            {
+                                case ReportStatus.Pending:
+                                    <span class="badge bg-soft-warning text-warning">Pending</span>
+                                    break;
+                                case ReportStatus.Approved:
+                                    <span class="badge bg-soft-success text-success">Approved</span>
+                                    break;
+                                case ReportStatus.Rejected:
+                                    <span class="badge bg-soft-danger text-danger">Rejected</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (report.IsRead)
+                            {
+                                <i class="bi bi-check2-all text-success" title="Read"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-circle text-primary" title="Unread"></i>
+                            }
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="dropdown position-relative">
+                                <button class="btn btn-light btn-sm border"
+                                        type="button"
+                                        @onclick="() => ToggleReportActionsDropdown(report.ReportId)">
+                                    ...
+                                </button>
+
+                                @if (openReportDropdownId == report.ReportId)
+                                {
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm show"
+                                        style="display: block; position: absolute; right: 0; top: 100%; z-index: 1050;">
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2"
+                                                    @onclick="() => MarkAsRead(report)">
+                                                <i class="bi bi-eye"></i> Mark as Read
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2"
+                                                    disabled>
+                                                <i class="bi bi-arrows-fullscreen"></i> View Details
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                                    disabled>
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Report Form Modal -->
+<ReportFormModal IsVisible="isReportModalVisible"
+                 ExistingReport="selectedReport"
+                 OnClose="CloseReportModal"
+                 OnSave="HandleReportSave" />
+
+@code {
+    // ─── State ───
+    private string searchTerm = "";
+    private string filterStatus = "All";
+    private string filterDepartment = "All";
+    private ReportFilterCategory activeCategory = ReportFilterCategory.None;
+    private string? openReportDropdownId = null;
+
+    private bool isReportModalVisible = false;
+    private ReportModel? selectedReport = null;
+
+    // ─── Mock Data ───
+    private List<ReportModel> allReports = new()
+    {
+        new ReportModel
+        {
+            ReportId = "#RPT-001",
+            Title = "Site Inspection - Sector 4",
+            Description = "Completed structural inspection of foundation piles.",
+            Reporter = "John Doe",
+            ReporterId = "1",
+            Department = "Engineering",
+            ReportDate = DateTime.Today,
+            Status = ReportStatus.Pending,
+            IsRead = false
+        },
+        new ReportModel
+        {
+            ReportId = "#RPT-002",
+            Title = "MEP Drawing Revision",
+            Description = "Revised HVAC duct layout based on client feedback.",
+            Reporter = "Jane Smith",
+            ReporterId = "2",
+            Department = "Design",
+            ReportDate = DateTime.Today.AddDays(-1),
+            Status = ReportStatus.Approved,
+            IsRead = true
+        },
+        new ReportModel
+        {
+            ReportId = "#RPT-003",
+            Title = "Weekly Progress Summary",
+            Description = "Civil works 70% complete. Delays in concrete delivery.",
+            Reporter = "Mike Johnson",
+            ReporterId = "3",
+            Department = "Operations",
+            ReportDate = DateTime.Today.AddDays(-2),
+            Status = ReportStatus.Pending,
+            IsRead = false
+        },
+        new ReportModel
+        {
+            ReportId = "#RPT-004",
+            Title = "Electrical Load Calculation",
+            Description = "Updated panel schedules and load balancing report.",
+            Reporter = "Sarah Wilson",
+            ReporterId = "4",
+            Department = "Engineering",
+            ReportDate = DateTime.Today.AddDays(-5),
+            Status = ReportStatus.Rejected,
+            IsRead = true
+        },
+    };
+
+    // ─── Computed / Filtered Reports ───
+    private IEnumerable<ReportModel> filteredReports =>
+        allReports
+            .Where(r => activeCategory == ReportFilterCategory.None || MatchesCategory(r, activeCategory))
+            .Where(r => filterStatus == "All" || r.Status.ToString() == filterStatus)
+            .Where(r => filterDepartment == "All" || r.Department == filterDepartment)
+            .Where(r =>
+                string.IsNullOrWhiteSpace(searchTerm) ||
+                r.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                r.Reporter.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                r.Department.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    // ─── Summary Card Counts ───
+    private int GetCountByCategory(ReportFilterCategory category) =>
+        allReports.Count(r => MatchesCategory(r, category));
+
+    private bool MatchesCategory(ReportModel r, ReportFilterCategory category)
+    {
+        return category switch
+        {
+            ReportFilterCategory.Unread => !r.IsRead,
+            ReportFilterCategory.Today => r.ReportDate.Date == DateTime.Today,
+            ReportFilterCategory.ThisWeek => r.ReportDate.Date >= DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek),
+            ReportFilterCategory.PendingReview => r.Status == ReportStatus.Pending,
+            _ => true
+        };
+    }
+
+    // ─── Filter Actions ───
+    private void FilterByCategory(ReportFilterCategory category)
+    {
+        activeCategory = category;
+    }
+
+    private void ClearCategoryFilter()
+    {
+        activeCategory = ReportFilterCategory.None;
+    }
+
+    // ─── Dropdown Actions ───
+    private void ToggleReportActionsDropdown(string reportId)
+    {
+        openReportDropdownId = openReportDropdownId == reportId ? null : reportId;
+    }
+
+    private void MarkAsRead(ReportModel report)
+    {
+        report.IsRead = true;
+        openReportDropdownId = null;
+    }
+
+    // ─── Modal Actions ───
+    private void OpenCreateReportModal()
+    {
+        selectedReport = null;
+        isReportModalVisible = true;
+    }
+
+    private void CloseReportModal()
+    {
+        isReportModalVisible = false;
+        selectedReport = null;
+    }
+
+    private void HandleReportSave(ReportModel savedReport)
+    {
+        if (selectedReport == null)
+        {
+            // Create
+            savedReport.ReportId = $"#RPT-{allReports.Count + 1:D3}";
+            savedReport.ReportDate = DateTime.Today;
+            savedReport.IsRead = false;
+            savedReport.Status = ReportStatus.Pending;
+            allReports.Add(savedReport);
+        }
+        else
+        {
+            // Edit
+            var index = allReports.FindIndex(r => r.ReportId == savedReport.ReportId);
+            if (index >= 0)
+            {
+                allReports[index] = savedReport;
+            }
+        }
+
+        isReportModalVisible = false;
+        selectedReport = null;
+    }
+
+   
+}

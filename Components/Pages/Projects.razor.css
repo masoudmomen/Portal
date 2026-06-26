@@ -1,0 +1,78 @@
+﻿/* Header & Page styling */
+.page-header h2 {
+    letter-spacing: -0.5px;
+}
+
+/* Search Group Styling */
+.search-group .form-control {
+    border-radius: 12px 0 0 12px;
+    padding: 12px 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.search-group .btn {
+    border-radius: 0 12px 12px 0;
+    border: 1px solid #3766ff;
+    color: #3766ff;
+}
+
+    .search-group .btn:hover {
+        background-color: #3766ff;
+        color: white;
+    }
+
+/* Filter Selects */
+.filter-select {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 15px;
+    color: #64748b;
+    min-width: 140px;
+}
+
+/* Table Styling */
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: #64748b;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+    .table tbody tr:hover {
+        background-color: #f8fafc !important;
+    }
+
+/* Soft Badges (خیلی مهم برای ظاهر مدرن) */
+.bg-soft-success {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+}
+
+.bg-soft-warning {
+    background-color: #fef9c3 !important;
+    color: #a16207 !important;
+}
+
+.bg-soft-danger {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+.bg-soft-info {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+}
+
+/* Progress Bar Customization */
+.progress {
+    background-color: #f1f5f9;
+    border-radius: 10px;
+}

@@ -1,0 +1,145 @@
+﻿@rendermode InteractiveServer
+@using Portal.Models
+
+@if (IsVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal d-block fade show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+
+                <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold fs-4">
+                        @(IsEditMode ? "Edit Report" : "Submit New Report")
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <EditForm Model="@reportModel" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Report Title</label>
+                                <input type="text" class="form-control custom-input"
+                                       @bind="reportModel.Title" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Department</label>
+                                <select class="form-select custom-input" @bind="reportModel.Department">
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Design">Design</option>
+                                    <option value="Operations">Operations</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Description</label>
+                                <textarea class="form-control custom-input" rows="4"
+                                          @bind="reportModel.Description"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Reporter Name</label>
+                                <input type="text" class="form-control custom-input"
+                                       @bind="reportModel.Reporter" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Submitted To (Manager)</label>
+                                <input type="text" class="form-control custom-input"
+                                       @bind="reportModel.SubmittedTo" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Work Date</label>
+                                <input type="date" class="form-control custom-input"
+                                       @bind="reportModel.WorkDate" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Category</label>
+                                <select class="form-select custom-input" @bind="reportModel.Category">
+                                    <option value="Daily">Daily Report</option>
+                                    <option value="Weekly">Weekly Summary</option>
+                                    <option value="Inspection">Inspection</option>
+                                    <option value="Progress">Progress Update</option>
+                                    <option value="Issue">Issue / Blocker</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-top-0 pt-4 px-0 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-light px-4" @onclick="Close">Cancel</button>
+                            <button type="submit" class="@SubmitButtonCssClass">
+                                @(IsEditMode ? "Save Changes" : "Submit Report")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public ReportModel? ExistingReport { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ReportModel> OnSave { get; set; }
+
+    private ReportModel reportModel = new();
+    private bool IsEditMode => ExistingReport != null;
+
+    private string SubmitButtonCssClass =>
+        $"btn {(IsEditMode ? "btn-warning" : "btn-primary")} px-4 shadow-sm";
+
+    protected override void OnParametersSet()
+    {
+        if (!IsVisible)
+            return;
+
+        reportModel = ExistingReport is null
+            ? CreateDefaultReport()
+            : CloneReport(ExistingReport);
+    }
+
+    private static ReportModel CreateDefaultReport()
+    {
+        return new ReportModel
+        {
+            Department = "Engineering",
+            WorkDate = DateTime.Today,
+            Category = "Daily"
+        };
+    }
+
+    private static ReportModel CloneReport(ReportModel source)
+    {
+        return new ReportModel
+        {
+            ReportId = source.ReportId,
+            Title = source.Title,
+            Description = source.Description,
+            Reporter = source.Reporter,
+            ReporterId = source.ReporterId,
+            SubmittedTo = source.SubmittedTo,
+            Department = source.Department,
+            Category = source.Category,
+            WorkDate = source.WorkDate,
+            ReportDate = source.ReportDate,
+            Status = source.Status,
+            IsRead = source.IsRead
+        };
+    }
+
+    private async Task Close() => await OnClose.InvokeAsync();
+
+    private async Task HandleSubmit() => await OnSave.InvokeAsync(reportModel);
+
+    
+}

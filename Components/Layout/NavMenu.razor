@@ -1,38 +1,42 @@
 ﻿<nav class="bottom-nav">
-
-    <a href="/" class="nav-item active">
-        <svg viewBox="0 0 24 24">
-            <path d="M3 10L12 3L21 10V21H3Z" />
+    <NavLink href="/dashboard" class="nav-item" ActiveClass="active">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
         </svg>
         <span>Dashboard</span>
-    </a>
+    </NavLink>
 
-    <a href="/projects" class="nav-item">
-        <svg viewBox="0 0 24 24">
-            <path d="M3 6H21V18H3Z" />
+    <NavLink href="/projects" class="nav-item" ActiveClass="active">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
         </svg>
         <span>Projects</span>
-    </a>
+    </NavLink>
 
-    <a href="/actions" class="nav-item">
-        <svg viewBox="0 0 24 24">
-            <path d="M12 5V19M5 12H19" />
+    <NavLink href="/actions" class="nav-item" ActiveClass="active">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M2 12h20" />
+            <path d="m17 7 5 5-5 5M7 17l-5-5 5-5" />
         </svg>
         <span>Actions</span>
-    </a>
+    </NavLink>
 
-    <a href="/tasks" class="nav-item">
-        <svg viewBox="0 0 24 24">
-            <path d="M4 6H20M4 12H20M4 18H20" />
+    <NavLink href="/tasks" class="nav-item" ActiveClass="active">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
         <span>Tasks</span>
-    </a>
+    </NavLink>
 
-    <a href="/reports" class="nav-item">
-        <svg viewBox="0 0 24 24">
-            <path d="M6 3H18V21H6Z" />
+    <NavLink href="/reports" class="nav-item" ActiveClass="active">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
         </svg>
         <span>Reports</span>
-    </a>
-
+    </NavLink>
 </nav>

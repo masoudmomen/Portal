@@ -1,66 +1,156 @@
-﻿@page "/dashboard"
+﻿@page "/"
+@page "/dashboard"
 @layout MainLayout
 
 <div class="dashboard-page">
+    <div class="dashboard-hero mb-4">
+        <div class="top-header d-flex justify-content-between align-items-center">
+            <div class="text-start">
+                <div class="dashboard-kicker">
+                    Pacific MEP Engineering
+                </div>
 
-    <div class="top-header">
+                <h2 class="dashboard-title mb-1">
+                    Project Management Dashboard
+                </h2>
 
-        <div>
-            <div class="greeting">
-                Pacific MEP Engineering
+                <p class="dashboard-subtitle mb-0">
+                    Monitor projects, tasks, reports and progress in one place.
+                </p>
             </div>
 
-            <p class="greeting">
-                Project Management Dashboard
-            </p>
+            <img src="https://i.pravatar.cc/100"
+                 alt="User Profile"
+                 class="profile-image ms-3" />
         </div>
-
-        <img src="https://i.pravatar.cc/100"
-             class="profile-image" />
     </div>
 
-    <div class="stats-grid">
-
-        <div class="stat-card">
-            <div class="stat-number">12</div>
-            <div class="stat-title">Projects</div>
+    <div class="row g-3 stats-grid">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper" style="background-color: #eef2ff; color: #3766ff;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke="#3766ff" stroke-width="2" />
+                        <path d="M3 9H21" stroke="#3766ff" stroke-width="2" />
+                        <path d="M8 14H12" stroke="#3766ff" stroke-width="2" />
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">12</span>
+                    <span class="stat-label">Projects</span>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-number">38</div>
-            <div class="stat-title">Tasks</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper" style="background-color: #eef2ff; color: #3766ff;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 11L11 13L15 9" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">36</span>
+                    <span class="stat-label">Tasks</span>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-number">7</div>
-            <div class="stat-title">Reports</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper" style="background-color: #eef2ff; color: #3766ff;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 20V10M12 20V4M6 20V14" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 20H22" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">7</span>
+                    <span class="stat-label">Reports</span>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-number">5</div>
-            <div class="stat-title">Visions</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper" style="background-color: #eef2ff; color: #3766ff;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">5</span>
+                    <span class="stat-label">Actions</span>
+                </div>
+            </div>
         </div>
-
     </div>
 
-    <div class="section-card">
+    <div class="row g-3 mt-1">
+        <div class="col-12 col-lg-7">
+            <div class="section-card dashboard-card-glass h-100">
+                <div class="section-title d-flex align-items-center justify-content-between">
+                    <span>Recent Activities</span>
+                    <span class="section-badge">Live</span>
+                </div>
 
-        <div class="section-title">
-            Recent Activities
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-dot activity-dot-blue"></div>
+                        <div>
+                            <div class="activity-title">New report submitted</div>
+                            <div class="activity-meta">Today • 10:24 AM</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-dot activity-dot-green"></div>
+                        <div>
+                            <div class="activity-title">Task completed</div>
+                            <div class="activity-meta">Today • 09:15 AM</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-dot activity-dot-orange"></div>
+                        <div>
+                            <div class="activity-title">Vision updated</div>
+                            <div class="activity-meta">Yesterday • 04:40 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="activity-item">
-            New report submitted
-        </div>
+        <div class="col-12 col-lg-5">
+            <div class="section-card dashboard-card-accent h-100">
+                <div class="section-title">Quick Overview</div>
 
-        <div class="activity-item">
-            Task completed
-        </div>
+                <div class="overview-item">
+                    <span>Project health</span>
+                    <strong>87%</strong>
+                </div>
 
-        <div class="activity-item">
-            Vision updated
-        </div>
+                <div class="overview-progress">
+                    <div class="overview-progress-bar" style="width:87%"></div>
+                </div>
 
+                <div class="overview-item mt-4">
+                    <span>On-time tasks</span>
+                    <strong>31 / 38</strong>
+                </div>
+
+                <div class="overview-item">
+                    <span>Open reports</span>
+                    <strong>2</strong>
+                </div>
+
+                <div class="overview-item">
+                    <span>Pending actions</span>
+                    <strong>4</strong>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
