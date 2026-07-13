@@ -1,0 +1,981 @@
+﻿@page "/actions"
+
+<div class="container-fluid py-4 actions-page">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1 fw-semibold">Actions</h3>
+            <p class="text-muted mb-0">Manage project assignments, tasks, and subtasks from one place.</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+            </button>
+            <button class="btn btn-primary" @onclick="OpenCreateActionModal">
+                <i class="bi bi-plus-lg me-1"></i> New Action
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Total Actions</div>
+                    <div class="fs-3 fw-bold">@FilteredActions.Count()</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">In Progress</div>
+                    <div class="fs-3 fw-bold text-warning">@FilteredActions.Count(x => x.Status == ActionStatus.InProgress)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Completed</div>
+                    <div class="fs-3 fw-bold text-success">@FilteredActions.Count(x => x.Status == ActionStatus.Completed)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Overdue</div>
+                    <div class="fs-3 fw-bold text-danger">@FilteredActions.Count(IsOverdue)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <label class="form-label">Search</label>
+                    <input class="form-control"
+                           placeholder="Search by title, project, assignee..."
+                           @bind="searchTerm" />
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <label class="form-label">Project</label>
+                    <select class="form-select" @bind="selectedProject">
+                        <option value="All">All</option>
+                        @foreach (var project in projects)
+                        {
+                            <option value="@project">@project</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" @bind="selectedStatus">
+                        <option value="All">All</option>
+                        @foreach (var status in Enum.GetValues<ActionStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label">Priority</label>
+                    <select class="form-select" @bind="selectedPriority">
+                        <option value="All">All</option>
+                        @foreach (var priority in Enum.GetValues<ActionPriority>())
+                        {
+                            <option value="@priority">@priority</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label">Assignee</label>
+                    <select class="form-select" @bind="selectedAssignee">
+                        <option value="All">All</option>
+                        @foreach (var assignee in assignees)
+                        {
+                            <option value="@assignee">@assignee</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Action List</h5>
+                            <div class="text-muted small">@FilteredActions.Count() items</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (FilteredActions.Any())
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var action in FilteredActions)
+                            {
+                                <button type="button"
+                                        class="btn text-start p-0 border-0 bg-transparent"
+                                        @onclick="() => SelectAction(action.Id)">
+                                    <div class="card action-list-item @(selectedAction?.Id == action.Id ? "selected-action" : "")">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                                <div>
+                                                    <h6 class="mb-1 fw-semibold">@action.Title</h6>
+                                                    <div class="text-muted small">@action.ProjectName</div>
+                                                </div>
+                                                <span class="badge @GetStatusBadgeClass(action.Status)">
+                                                    @action.Status
+                                                </span>
+                                            </div>
+
+                                            <div class="small text-muted mb-2">
+                                                Assigned to <span class="fw-semibold">@action.AssignedTo</span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between small mb-2">
+                                                <span>Priority: <span class="fw-semibold">@action.Priority</span></span>
+                                                <span>Due: @FormatDate(action.DueDate)</span>
+                                            </div>
+
+                                            <div class="progress mb-2" style="height: 7px;">
+                                                <div class="progress-bar @GetProgressBarClass(action.Progress)"
+                                                     role="progressbar"
+                                                     style="width: @($"{action.Progress}%");">
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-center small text-muted">
+                                                <span>@action.Progress% complete</span>
+                                                <span>@action.Tasks.Count task(s)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                            <div>No actions found for current filters.</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+            @if (selectedAction is not null)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <h4 class="mb-0">@selectedAction.Title</h4>
+                                    <span class="badge @GetStatusBadgeClass(selectedAction.Status)">
+                                        @selectedAction.Status
+                                    </span>
+                                </div>
+                                <div class="text-muted mb-2">@selectedAction.Description</div>
+                                <div class="small text-muted">
+                                    Project: <span class="fw-semibold">@selectedAction.ProjectName</span>
+                                    |
+                                    Assigned by: <span class="fw-semibold">@selectedAction.AssignedBy</span>
+                                    |
+                                    Assigned to: <span class="fw-semibold">@selectedAction.AssignedTo</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-primary btn-sm" @onclick="OpenEditActionModal">
+                                    <i class="bi bi-pencil-square me-1"></i> Edit
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" @onclick="AddTaskToSelectedAction">
+                                    <i class="bi bi-plus-lg me-1"></i> Add Task
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-1">Priority</div>
+                                    <div class="fw-semibold">@selectedAction.Priority</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-1">Due Date</div>
+                                    <div class="fw-semibold">@FormatDate(selectedAction.DueDate)</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-1">Tasks</div>
+                                    <div class="fw-semibold">@selectedAction.Tasks.Count</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-1">Progress</div>
+                                    <div class="fw-semibold">@selectedAction.Progress%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span>Overall Progress</span>
+                                <span>@selectedAction.Progress%</span>
+                            </div>
+                            <div class="progress" style="height: 9px;">
+                                <div class="progress-bar @GetProgressBarClass(selectedAction.Progress)"
+                                     role="progressbar"
+                                     style="width: @($"{selectedAction.Progress}%");">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">Tasks</h5>
+                                <div class="text-muted small">Each action can contain multiple tasks and subtasks.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        @if (selectedAction.Tasks.Any())
+                        {
+                            <div class="accordion" id="tasksAccordion">
+                                @foreach (var task in selectedAction.Tasks)
+                                {
+                                    var collapseId = $"task-collapse-{task.Id}";
+                                    var headingId = $"task-heading-{task.Id}";
+
+                                    <div class="accordion-item border rounded mb-3 overflow-hidden">
+                                        <h2 class="accordion-header" id="@headingId">
+                                            <button class="accordion-button collapsed"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#@collapseId"
+                                                    aria-expanded="false"
+                                                    aria-controls="@collapseId">
+                                                <div class="w-100 me-3">
+                                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                                                        <div>
+                                                            <span class="fw-semibold">@task.Title</span>
+                                                            <span class="badge ms-2 @GetTaskStatusBadgeClass(task.Status)">@task.Status</span>
+                                                        </div>
+                                                        <div class="small text-muted">
+                                                            Owner: @task.AssignedTo | Due: @FormatDate(task.DueDate)
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="progress mt-2" style="height: 6px;">
+                                                        <div class="progress-bar bg-info"
+                                                             role="progressbar"
+                                                             style="width: @($"{task.Progress}%");">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </h2>
+
+                                        <div id="@collapseId"
+                                             class="accordion-collapse collapse"
+                                             aria-labelledby="@headingId"
+                                             data-bs-parent="#tasksAccordion">
+                                            <div class="accordion-body">
+                                                <p class="text-muted mb-3">@task.Description</p>
+
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div class="small text-muted">
+                                                        @task.Subtasks.Count subtask(s) | @task.Progress% completed
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => AddSubtask(task.Id)">
+                                                        <i class="bi bi-plus-lg me-1"></i> Add Subtask
+                                                    </button>
+                                                </div>
+
+                                                @if (task.Subtasks.Any())
+                                                {
+                                                    <div class="list-group">
+                                                        @foreach (var subtask in task.Subtasks.OrderBy(x => x.OrderIndex))
+                                                        {
+                                                            <div class="list-group-item">
+                                                                <div class="d-flex justify-content-between align-items-center gap-3">
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <input class="form-check-input"
+                                                                               type="checkbox"
+                                                                               checked="@subtask.IsDone"
+                                                                               @onchange="() => ToggleSubtask(task.Id, subtask.Id)" />
+                                                                        <div>
+                                                                            <div class="fw-semibold @(subtask.IsDone ? "text-decoration-line-through text-muted" : "")">
+                                                                                @subtask.Title
+                                                                            </div>
+                                                                            @if (!string.IsNullOrWhiteSpace(subtask.Description))
+                                                                            {
+                                                                                <div class="small text-muted">@subtask.Description</div>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <span class="badge @(subtask.IsDone ? "bg-success-subtle text-success-emphasis" : "bg-light text-dark")">
+                                                                        @(subtask.IsDone ? "Done" : "Pending")
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-muted small">No subtasks defined yet.</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-list-check fs-1 d-block mb-3"></i>
+                                <div>No tasks added to this action yet.</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center text-muted py-5">
+                        <i class="bi bi-kanban fs-1 mb-3"></i>
+                        <h5 class="mb-2">Select an Action</h5>
+                        <p class="mb-0">Choose an action from the left list to view its tasks and subtasks.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (isActionModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditMode ? "Edit Action" : "Create New Action")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseActionModal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Project</label>
+                            <select class="form-select" @bind="actionForm.ProjectName">
+                                @foreach (var project in projects)
+                                {
+                                    <option value="@project">@project</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Title</label>
+                            <input class="form-control" @bind="actionForm.Title" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned To</label>
+                            <select class="form-select" @bind="actionForm.AssignedTo">
+                                @foreach (var assignee in assignees)
+                                {
+                                    <option value="@assignee">@assignee</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned By</label>
+                            <input class="form-control" @bind="actionForm.AssignedBy" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="actionForm.Status">
+                                @foreach (var status in Enum.GetValues<ActionStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" @bind="actionForm.Priority">
+                                @foreach (var priority in Enum.GetValues<ActionPriority>())
+                                {
+                                    <option value="@priority">@priority</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Due Date</label>
+                            <input class="form-control" type="datetime" @bind="actionForm.DueDateText" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="4" @bind="actionForm.Description"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" @onclick="CloseActionModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveAction">Save Action</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private string searchTerm = string.Empty;
+    private string selectedProject = "All";
+    private string selectedStatus = "All";
+    private string selectedPriority = "All";
+    private string selectedAssignee = "All";
+
+    private bool isActionModalOpen;
+    private bool isEditMode;
+
+    private List<string> projects = new()
+    {
+        "Corporate Portal",
+        "Engineering Dashboard",
+        "HR Automation",
+        "Document Control System"
+    };
+
+    private List<string> assignees = new()
+    {
+        "Ali Ahmadi",
+        "Sara Mohammadi",
+        "Reza Karimi",
+        "Neda Hosseini"
+    };
+
+    private List<ActionItem> actions = new();
+    private ActionItem? selectedAction;
+    private ActionFormModel actionForm = new();
+
+    private IEnumerable<ActionItem> FilteredActions =>
+        actions
+            .Where(x => selectedProject == "All" || x.ProjectName == selectedProject)
+            .Where(x => selectedStatus == "All" || x.Status.ToString() == selectedStatus)
+            .Where(x => selectedPriority == "All" || x.Priority.ToString() == selectedPriority)
+            .Where(x => selectedAssignee == "All" || x.AssignedTo == selectedAssignee)
+            .Where(x =>
+                string.IsNullOrWhiteSpace(searchTerm) ||
+                x.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                x.ProjectName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                x.AssignedTo.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                x.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized()
+    {
+        actions = SeedActions();
+        selectedAction = actions.FirstOrDefault();
+    }
+
+    private void SelectAction(int actionId)
+    {
+        selectedAction = actions.FirstOrDefault(x => x.Id == actionId);
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedProject = "All";
+        selectedStatus = "All";
+        selectedPriority = "All";
+        selectedAssignee = "All";
+    }
+
+    private void OpenCreateActionModal()
+    {
+        isEditMode = false;
+        actionForm = new ActionFormModel
+        {
+            ProjectName = projects.First(),
+            AssignedTo = assignees.First(),
+            AssignedBy = "Project Manager",
+            Status = ActionStatus.New,
+            Priority = ActionPriority.Medium,
+            DueDateText = DateTime.Today.AddDays(7)
+        };
+
+        isActionModalOpen = true;
+    }
+
+    private void OpenEditActionModal()
+    {
+        if (selectedAction is null)
+        {
+            return;
+        }
+
+        isEditMode = true;
+        actionForm = new ActionFormModel
+        {
+            Id = selectedAction.Id,
+            ProjectName = selectedAction.ProjectName,
+            Title = selectedAction.Title,
+            Description = selectedAction.Description,
+            AssignedTo = selectedAction.AssignedTo,
+            AssignedBy = selectedAction.AssignedBy,
+            Status = selectedAction.Status,
+            Priority = selectedAction.Priority,
+            DueDateText = selectedAction.DueDate 
+        };
+
+        isActionModalOpen = true;
+    }
+
+    private void CloseActionModal()
+    {
+        isActionModalOpen = false;
+    }
+
+    private void SaveAction()
+    {
+        if (string.IsNullOrWhiteSpace(actionForm.Title))
+        {
+            return;
+        }
+
+        if (isEditMode)
+        {
+            var item = actions.FirstOrDefault(x => x.Id == actionForm.Id);
+            if (item is null)
+            {
+                return;
+            }
+
+            item.ProjectName = actionForm.ProjectName;
+            item.Title = actionForm.Title;
+            item.Description = actionForm.Description;
+            item.AssignedTo = actionForm.AssignedTo;
+            item.AssignedBy = actionForm.AssignedBy;
+            item.Status = actionForm.Status;
+            item.Priority = actionForm.Priority;
+            item.DueDate = actionForm.DueDateText;
+
+            selectedAction = item;
+        }
+        else
+        {
+            var newAction = new ActionItem
+            {
+                Id = actions.Max(x => x.Id) + 1,
+                ProjectName = actionForm.ProjectName,
+                Title = actionForm.Title,
+                Description = actionForm.Description,
+                AssignedTo = actionForm.AssignedTo,
+                AssignedBy = actionForm.AssignedBy,
+                Status = actionForm.Status,
+                Priority = actionForm.Priority,
+                DueDate = actionForm.DueDateText,
+                Tasks = new List<TaskItem>()
+            };
+
+            actions.Insert(0, newAction);
+            selectedAction = newAction;
+        }
+
+        isActionModalOpen = false;
+    }
+
+    private void AddTaskToSelectedAction()
+    {
+        if (selectedAction is null)
+        {
+            return;
+        }
+
+        var nextTaskId = actions.SelectMany(x => x.Tasks).DefaultIfEmpty().Max(x => x is null ? 0 : x.Id) + 1;
+
+        selectedAction.Tasks.Add(new TaskItem
+        {
+            Id = nextTaskId,
+            Title = "New Task",
+            Description = "Define task details here.",
+            AssignedTo = selectedAction.AssignedTo,
+            DueDate = DateTime.Today.AddDays(3),
+            Status = TaskStatus.New,
+            Subtasks = new List<SubtaskItem>()
+        });
+
+        UpdateActionProgress(selectedAction);
+    }
+
+    private void AddSubtask(int taskId)
+    {
+        if (selectedAction is null)
+        {
+            return;
+        }
+
+        var task = selectedAction.Tasks.FirstOrDefault(x => x.Id == taskId);
+        if (task is null)
+        {
+            return;
+        }
+
+        var nextSubtaskId = actions
+            .SelectMany(x => x.Tasks)
+            .SelectMany(x => x.Subtasks)
+            .DefaultIfEmpty()
+            .Max(x => x is null ? 0 : x.Id) + 1;
+
+        task.Subtasks.Add(new SubtaskItem
+        {
+            Id = nextSubtaskId,
+            Title = "New Subtask",
+            Description = "Define subtask details here.",
+            OrderIndex = task.Subtasks.Count + 1,
+            IsDone = false
+        });
+
+        UpdateTaskProgress(task);
+        UpdateActionProgress(selectedAction);
+    }
+
+    private void ToggleSubtask(int taskId, int subtaskId)
+    {
+        if (selectedAction is null)
+        {
+            return;
+        }
+
+        var task = selectedAction.Tasks.FirstOrDefault(x => x.Id == taskId);
+        var subtask = task?.Subtasks.FirstOrDefault(x => x.Id == subtaskId);
+
+        if (task is null || subtask is null)
+        {
+            return;
+        }
+
+        subtask.IsDone = !subtask.IsDone;
+        UpdateTaskProgress(task);
+        UpdateActionProgress(selectedAction);
+    }
+
+    private void UpdateTaskProgress(TaskItem task)
+    {
+        if (!task.Subtasks.Any())
+        {
+            task.Progress = task.Status == TaskStatus.Completed ? 100 : 0;
+        }
+        else
+        {
+            task.Progress = (int)Math.Round(task.Subtasks.Count(x => x.IsDone) * 100.0 / task.Subtasks.Count);
+        }
+
+        task.Status = task.Progress switch
+        {
+            100 => TaskStatus.Completed,
+            > 0 => TaskStatus.InProgress,
+            _ => task.Status == TaskStatus.Blocked ? TaskStatus.Blocked : TaskStatus.New
+        };
+    }
+
+    private void UpdateActionProgress(ActionItem action)
+    {
+        if (!action.Tasks.Any())
+        {
+            action.Progress = action.Status == ActionStatus.Completed ? 100 : 0;
+        }
+        else
+        {
+            foreach (var task in action.Tasks)
+            {
+                UpdateTaskProgress(task);
+            }
+
+            action.Progress = (int)Math.Round(action.Tasks.Average(x => x.Progress));
+        }
+
+        action.Status = action.Progress switch
+        {
+            100 => ActionStatus.Completed,
+            > 0 => ActionStatus.InProgress,
+            _ => action.Status == ActionStatus.Blocked ? ActionStatus.Blocked : action.Status
+        };
+    }
+
+    private bool IsOverdue(ActionItem item) =>
+        
+        item.DueDate.Date < DateTime.Today &&
+        item.Status != ActionStatus.Completed &&
+        item.Status != ActionStatus.Canceled;
+
+    private static DateTime? ParseDate(string? value) =>
+        DateTime.TryParse(value, out var result) ? result : null;
+
+    private static string FormatDate(DateTime? date) =>
+        date?.ToString("yyyy/MM/dd") ?? "-";
+
+    private static string GetStatusBadgeClass(ActionStatus status) => status switch
+    {
+        ActionStatus.New => "bg-secondary-subtle text-secondary-emphasis",
+        ActionStatus.Assigned => "bg-primary-subtle text-primary-emphasis",
+        ActionStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
+        ActionStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
+        ActionStatus.Completed => "bg-success-subtle text-success-emphasis",
+        ActionStatus.Canceled => "bg-dark-subtle text-dark-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    private static string GetTaskStatusBadgeClass(TaskStatus status) => status switch
+    {
+        TaskStatus.New => "bg-secondary-subtle text-secondary-emphasis",
+        TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
+        TaskStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
+        TaskStatus.Completed => "bg-success-subtle text-success-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    private static string GetProgressBarClass(int progress) => progress switch
+    {
+        >= 100 => "bg-success",
+        >= 50 => "bg-primary",
+        > 0 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private List<ActionItem> SeedActions()
+    {
+        var seeded = new List<ActionItem>
+        {
+            new()
+            {
+                Id = 1,
+                ProjectName = "Corporate Portal",
+                Title = "Assign UI implementation for portal dashboard",
+                Description = "Project manager creates an action and assigns dashboard UI work to the responsible engineer.",
+                AssignedBy = "Project Manager",
+                AssignedTo = "Ali Ahmadi",
+                Status = ActionStatus.InProgress,
+                Priority = ActionPriority.High,
+                DueDate = DateTime.Today.AddDays(5),
+                Tasks = new List<TaskItem>
+                {
+                    new()
+                    {
+                        Id = 1,
+                        Title = "Prepare dashboard wireframe",
+                        Description = "Create the initial layout and define KPI cards.",
+                        AssignedTo = "Ali Ahmadi",
+                        Status = TaskStatus.InProgress,
+                        DueDate = DateTime.Today.AddDays(2),
+                        Subtasks = new List<SubtaskItem>
+                        {
+                            new() { Id = 1, Title = "Define page sections", Description = "Header, summary cards, charts, and tables.", IsDone = true, OrderIndex = 1 },
+                            new() { Id = 2, Title = "Sketch KPI cards", Description = "Prepare initial wireframe for metrics.", IsDone = true, OrderIndex = 2 },
+                            new() { Id = 3, Title = "Review with manager", Description = "Get approval before UI implementation.", IsDone = false, OrderIndex = 3 }
+                        }
+                    },
+                    new()
+                    {
+                        Id = 2,
+                        Title = "Implement dashboard components",
+                        Description = "Build the page using Bootstrap cards and responsive layout.",
+                        AssignedTo = "Ali Ahmadi",
+                        Status = TaskStatus.New,
+                        DueDate = DateTime.Today.AddDays(4),
+                        Subtasks = new List<SubtaskItem>
+                        {
+                            new() { Id = 4, Title = "Create statistics cards", Description = "Add visual summary section.", IsDone = false, OrderIndex = 1 },
+                            new() { Id = 5, Title = "Add recent activity table", Description = "Show latest updates and statuses.", IsDone = false, OrderIndex = 2 }
+                        }
+                    }
+                }
+            },
+            new()
+            {
+                Id = 2,
+                ProjectName = "Engineering Dashboard",
+                Title = "Delegate reporting module analysis",
+                Description = "Analyze report categories, data needs, and user expectations.",
+                AssignedBy = "Project Manager",
+                AssignedTo = "Sara Mohammadi",
+                Status = ActionStatus.Assigned,
+                Priority = ActionPriority.Medium,
+                DueDate = DateTime.Today.AddDays(8),
+                Tasks = new List<TaskItem>
+                {
+                    new()
+                    {
+                        Id = 3,
+                        Title = "Collect reporting requirements",
+                        Description = "Meet stakeholders and document key report types.",
+                        AssignedTo = "Sara Mohammadi",
+                        Status = TaskStatus.New,
+                        DueDate = DateTime.Today.AddDays(3),
+                        Subtasks = new List<SubtaskItem>
+                        {
+                            new() { Id = 6, Title = "List report consumers", Description = "Managers, engineers, and admins.", IsDone = false, OrderIndex = 1 },
+                            new() { Id = 7, Title = "Identify report fields", Description = "Status, progress, owner, deadlines.", IsDone = false, OrderIndex = 2 }
+                        }
+                    }
+                }
+            },
+            new()
+            {
+                Id = 3,
+                ProjectName = "Document Control System",
+                Title = "Follow up overdue document migration",
+                Description = "Track legacy file migration and reassign blocked items where needed.",
+                AssignedBy = "Operations Manager",
+                AssignedTo = "Reza Karimi",
+                Status = ActionStatus.Blocked,
+                Priority = ActionPriority.Critical,
+                DueDate = DateTime.Today.AddDays(-2),
+                Tasks = new List<TaskItem>
+                {
+                    new()
+                    {
+                        Id = 4,
+                        Title = "Validate migrated documents",
+                        Description = "Check metadata and access rules.",
+                        AssignedTo = "Reza Karimi",
+                        Status = TaskStatus.Blocked,
+                        DueDate = DateTime.Today.AddDays(-1),
+                        Subtasks = new List<SubtaskItem>
+                        {
+                            new() { Id = 8, Title = "Compare file counts", Description = "Source vs target repository.", IsDone = true, OrderIndex = 1 },
+                            new() { Id = 9, Title = "Verify permissions", Description = "Check access by department.", IsDone = false, OrderIndex = 2 }
+                        }
+                    }
+                }
+            }
+        };
+
+        foreach (var action in seeded)
+        {
+            UpdateActionProgress(action);
+        }
+
+        return seeded;
+    }
+
+    private class ActionItem
+    {
+        public int Id { get; set; }
+        public string ProjectName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public string AssignedBy { get; set; } = string.Empty;
+        public ActionStatus Status { get; set; }
+        public ActionPriority Priority { get; set; }
+        public DateTime DueDate { get; set; }
+        public int Progress { get; set; }
+        public List<TaskItem> Tasks { get; set; } = new();
+    }
+
+    private class TaskItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public TaskStatus Status { get; set; }
+        public DateTime? DueDate { get; set; }
+        public int Progress { get; set; }
+        public List<SubtaskItem> Subtasks { get; set; } = new();
+    }
+
+    private class SubtaskItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool IsDone { get; set; }
+        public int OrderIndex { get; set; }
+    }
+
+    private class ActionFormModel
+    {
+        public int Id { get; set; }
+        public string ProjectName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public string AssignedBy { get; set; } = string.Empty;
+        public ActionStatus Status { get; set; }
+        public ActionPriority Priority { get; set; }
+        public DateTime DueDateText { get; set; } 
+    }
+
+    private enum ActionStatus
+    {
+        New,
+        Assigned,
+        InProgress,
+        Blocked,
+        Completed,
+        Canceled
+    }
+
+    private enum TaskStatus
+    {
+        New,
+        InProgress,
+        Blocked,
+        Completed
+    }
+
+    private enum ActionPriority
+    {
+        Low,
+        Medium,
+        High,
+        Critical
+    }
+}
