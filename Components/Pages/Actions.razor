@@ -1,17 +1,19 @@
 ﻿@page "/actions"
 
-<div class="container-fluid py-4 actions-page">
+@* <div class="container-fluid py-4 actions-page"> *@
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
             <h3 class="mb-1 fw-semibold">Actions</h3>
-            <p class="text-muted mb-0">Manage project assignments, tasks, and subtasks from one place.</p>
+            <p class="text-muted mb-0">
+                Manage project actions, assign responsibilities, and track tasks and subtasks.
+            </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+            <button class="btn btn-outline-secondary rounded-pill px-3" @onclick="ClearFilters">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
             </button>
-            <button class="btn btn-primary" @onclick="OpenCreateActionModal">
+            <button class="btn btn-primary rounded-pill px-3" @onclick="OpenCreateActionModal">
                 <i class="bi bi-plus-lg me-1"></i> New Action
             </button>
         </div>
@@ -19,7 +21,7 @@
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Total Actions</div>
                     <div class="fs-3 fw-bold">@FilteredActions.Count()</div>
@@ -28,46 +30,52 @@
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
                 <div class="card-body">
                     <div class="text-muted small mb-1">In Progress</div>
-                    <div class="fs-3 fw-bold text-warning">@FilteredActions.Count(x => x.Status == ActionStatus.InProgress)</div>
+                    <div class="fs-3 fw-bold text-warning">
+                        @FilteredActions.Count(x => x.Status == ActionStatus.InProgress)
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Completed</div>
-                    <div class="fs-3 fw-bold text-success">@FilteredActions.Count(x => x.Status == ActionStatus.Completed)</div>
+                    <div class="fs-3 fw-bold text-success">
+                        @FilteredActions.Count(x => x.Status == ActionStatus.Completed)
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Overdue</div>
-                    <div class="fs-3 fw-bold text-danger">@FilteredActions.Count(IsOverdue)</div>
+                    <div class="fs-3 fw-bold text-danger">
+                        @FilteredActions.Count(IsOverdue)
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body">
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
                 <div class="col-12 col-md-6 col-xl-3">
                     <label class="form-label">Search</label>
-                    <input class="form-control"
-                           placeholder="Search by title, project, assignee..."
+                    <input class="form-control rounded-3"
+                           placeholder="Title, project, assignee..."
                            @bind="searchTerm" />
                 </div>
 
                 <div class="col-12 col-md-6 col-xl-3">
                     <label class="form-label">Project</label>
-                    <select class="form-select" @bind="selectedProject">
+                    <select class="form-select rounded-3" @bind="selectedProject">
                         <option value="All">All</option>
                         @foreach (var project in projects)
                         {
@@ -78,7 +86,7 @@
 
                 <div class="col-12 col-md-6 col-xl-2">
                     <label class="form-label">Status</label>
-                    <select class="form-select" @bind="selectedStatus">
+                    <select class="form-select rounded-3" @bind="selectedStatus">
                         <option value="All">All</option>
                         @foreach (var status in Enum.GetValues<ActionStatus>())
                         {
@@ -89,7 +97,7 @@
 
                 <div class="col-12 col-md-6 col-xl-2">
                     <label class="form-label">Priority</label>
-                    <select class="form-select" @bind="selectedPriority">
+                    <select class="form-select rounded-3" @bind="selectedPriority">
                         <option value="All">All</option>
                         @foreach (var priority in Enum.GetValues<ActionPriority>())
                         {
@@ -100,7 +108,7 @@
 
                 <div class="col-12 col-md-6 col-xl-2">
                     <label class="form-label">Assignee</label>
-                    <select class="form-select" @bind="selectedAssignee">
+                    <select class="form-select rounded-3" @bind="selectedAssignee">
                         <option value="All">All</option>
                         @foreach (var assignee in assignees)
                         {
@@ -114,12 +122,12 @@
 
     <div class="row g-4">
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-3 pb-0">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-0 rounded-top-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1">Action List</h5>
-                            <div class="text-muted small">@FilteredActions.Count() items</div>
+                            <div class="text-muted small">@FilteredActions.Count() item(s)</div>
                         </div>
                     </div>
                 </div>
@@ -131,9 +139,9 @@
                             @foreach (var action in FilteredActions)
                             {
                                 <button type="button"
-                                        class="btn text-start p-0 border-0 bg-transparent"
+                                        class="btn p-0 border-0 bg-transparent text-start"
                                         @onclick="() => SelectAction(action.Id)">
-                                    <div class="card action-list-item @(selectedAction?.Id == action.Id ? "selected-action" : "")">
+                                    <div class="card border rounded-4 action-list-card @(selectedAction?.Id == action.Id ? "selected-action" : "")">
                                         <div class="card-body">
                                             <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                                                 <div>
@@ -154,7 +162,7 @@
                                                 <span>Due: @FormatDate(action.DueDate)</span>
                                             </div>
 
-                                            <div class="progress mb-2" style="height: 7px;">
+                                            <div class="progress mb-2 rounded-pill" style="height: 7px;">
                                                 <div class="progress-bar @GetProgressBarClass(action.Progress)"
                                                      role="progressbar"
                                                      style="width: @($"{action.Progress}%");">
@@ -175,7 +183,7 @@
                     {
                         <div class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                            <div>No actions found for current filters.</div>
+                            <div>No actions found.</div>
                         </div>
                     }
                 </div>
@@ -185,11 +193,11 @@
         <div class="col-12 col-xl-8">
             @if (selectedAction is not null)
             {
-                <div class="card border-0 shadow-sm mb-4">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-body">
                         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
                             <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                                     <h4 class="mb-0">@selectedAction.Title</h4>
                                     <span class="badge @GetStatusBadgeClass(selectedAction.Status)">
                                         @selectedAction.Status
@@ -206,39 +214,39 @@
                             </div>
 
                             <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-outline-primary btn-sm" @onclick="OpenEditActionModal">
+                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" @onclick="OpenEditActionModal">
                                     <i class="bi bi-pencil-square me-1"></i> Edit
                                 </button>
-                                <button class="btn btn-outline-success btn-sm" @onclick="AddTaskToSelectedAction">
+                                <button class="btn btn-outline-success btn-sm rounded-pill px-3" @onclick="AddTaskToSelectedAction">
                                     <i class="bi bi-plus-lg me-1"></i> Add Task
                                 </button>
                             </div>
                         </div>
 
                         <div class="row g-3">
-                            <div class="col-md-3 col-6">
-                                <div class="border rounded p-3 h-100">
+                            <div class="col-6 col-md-3">
+                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
                                     <div class="text-muted small mb-1">Priority</div>
                                     <div class="fw-semibold">@selectedAction.Priority</div>
                                 </div>
                             </div>
 
-                            <div class="col-md-3 col-6">
-                                <div class="border rounded p-3 h-100">
+                            <div class="col-6 col-md-3">
+                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
                                     <div class="text-muted small mb-1">Due Date</div>
                                     <div class="fw-semibold">@FormatDate(selectedAction.DueDate)</div>
                                 </div>
                             </div>
 
-                            <div class="col-md-3 col-6">
-                                <div class="border rounded p-3 h-100">
+                            <div class="col-6 col-md-3">
+                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
                                     <div class="text-muted small mb-1">Tasks</div>
                                     <div class="fw-semibold">@selectedAction.Tasks.Count</div>
                                 </div>
                             </div>
 
-                            <div class="col-md-3 col-6">
-                                <div class="border rounded p-3 h-100">
+                            <div class="col-6 col-md-3">
+                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
                                     <div class="text-muted small mb-1">Progress</div>
                                     <div class="fw-semibold">@selectedAction.Progress%</div>
                                 </div>
@@ -250,7 +258,7 @@
                                 <span>Overall Progress</span>
                                 <span>@selectedAction.Progress%</span>
                             </div>
-                            <div class="progress" style="height: 9px;">
+                            <div class="progress rounded-pill" style="height: 9px;">
                                 <div class="progress-bar @GetProgressBarClass(selectedAction.Progress)"
                                      role="progressbar"
                                      style="width: @($"{selectedAction.Progress}%");">
@@ -260,12 +268,14 @@
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0 pt-3">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-0 pt-3 pb-0 rounded-top-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1">Tasks</h5>
-                                <div class="text-muted small">Each action can contain multiple tasks and subtasks.</div>
+                                <div class="text-muted small">
+                                    Each action can contain multiple tasks and subtasks.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -273,93 +283,98 @@
                     <div class="card-body">
                         @if (selectedAction.Tasks.Any())
                         {
-                            <div class="accordion" id="tasksAccordion">
-                                @foreach (var task in selectedAction.Tasks)
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var task in selectedAction.Tasks.OrderBy(x => x.Id))
                                 {
-                                    var collapseId = $"task-collapse-{task.Id}";
-                                    var headingId = $"task-heading-{task.Id}";
-
-                                    <div class="accordion-item border rounded mb-3 overflow-hidden">
-                                        <h2 class="accordion-header" id="@headingId">
-                                            <button class="accordion-button collapsed"
-                                                    type="button"
-                                                    data-bs-toggle="collapse"
-                                                    data-bs-target="#@collapseId"
-                                                    aria-expanded="false"
-                                                    aria-controls="@collapseId">
-                                                <div class="w-100 me-3">
+                                    <div class="card border rounded-4 task-card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                                <button type="button"
+                                                        class="btn p-0 border-0 bg-transparent text-start flex-grow-1"
+                                                        @onclick="() => ToggleTaskDetails(task.Id)">
                                                     <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
                                                         <div>
-                                                            <span class="fw-semibold">@task.Title</span>
-                                                            <span class="badge ms-2 @GetTaskStatusBadgeClass(task.Status)">@task.Status</span>
+                                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                                <span class="fw-semibold">@task.Title</span>
+                                                                <span class="badge @GetTaskStatusBadgeClass(task.Status)">
+                                                                    @task.Status
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <div class="small text-muted">
                                                             Owner: @task.AssignedTo | Due: @FormatDate(task.DueDate)
                                                         </div>
                                                     </div>
 
-                                                    <div class="progress mt-2" style="height: 6px;">
+                                                    <div class="progress mt-2 rounded-pill" style="height: 6px;">
                                                         <div class="progress-bar bg-info"
                                                              role="progressbar"
                                                              style="width: @($"{task.Progress}%");">
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </button>
-                                        </h2>
+                                                </button>
 
-                                        <div id="@collapseId"
-                                             class="accordion-collapse collapse"
-                                             aria-labelledby="@headingId"
-                                             data-bs-parent="#tasksAccordion">
-                                            <div class="accordion-body">
-                                                <p class="text-muted mb-3">@task.Description</p>
-
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <div class="small text-muted">
-                                                        @task.Subtasks.Count subtask(s) | @task.Progress% completed
-                                                    </div>
-                                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => AddSubtask(task.Id)">
-                                                        <i class="bi bi-plus-lg me-1"></i> Add Subtask
-                                                    </button>
-                                                </div>
-
-                                                @if (task.Subtasks.Any())
-                                                {
-                                                    <div class="list-group">
-                                                        @foreach (var subtask in task.Subtasks.OrderBy(x => x.OrderIndex))
-                                                        {
-                                                            <div class="list-group-item">
-                                                                <div class="d-flex justify-content-between align-items-center gap-3">
-                                                                    <div class="d-flex align-items-center gap-2">
-                                                                        <input class="form-check-input"
-                                                                               type="checkbox"
-                                                                               checked="@subtask.IsDone"
-                                                                               @onchange="() => ToggleSubtask(task.Id, subtask.Id)" />
-                                                                        <div>
-                                                                            <div class="fw-semibold @(subtask.IsDone ? "text-decoration-line-through text-muted" : "")">
-                                                                                @subtask.Title
-                                                                            </div>
-                                                                            @if (!string.IsNullOrWhiteSpace(subtask.Description))
-                                                                            {
-                                                                                <div class="small text-muted">@subtask.Description</div>
-                                                                            }
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <span class="badge @(subtask.IsDone ? "bg-success-subtle text-success-emphasis" : "bg-light text-dark")">
-                                                                        @(subtask.IsDone ? "Done" : "Pending")
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="text-muted small">No subtasks defined yet.</div>
-                                                }
+                                                <button class="btn btn-sm btn-light rounded-circle"
+                                                        title="Toggle details"
+                                                        @onclick="() => ToggleTaskDetails(task.Id)">
+                                                    <i class="bi @(expandedTaskIds.Contains(task.Id) ? "bi-chevron-up" : "bi-chevron-down")"></i>
+                                                </button>
                                             </div>
+
+                                            <div class="mt-3 text-muted small">
+                                                @task.Description
+                                            </div>
+
+                                            @if (expandedTaskIds.Contains(task.Id))
+                                            {
+                                                <div class="mt-3 pt-3 border-top">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <div class="small text-muted">
+                                                            @task.Subtasks.Count subtask(s) | @task.Progress% completed
+                                                        </div>
+                                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                                @onclick="() => AddSubtask(task.Id)">
+                                                            <i class="bi bi-plus-lg me-1"></i> Add Subtask
+                                                        </button>
+                                                    </div>
+
+                                                    @if (task.Subtasks.Any())
+                                                    {
+                                                        <div class="list-group list-group-flush">
+                                                            @foreach (var subtask in task.Subtasks.OrderBy(x => x.OrderIndex))
+                                                            {
+                                                                <div class="list-group-item px-0">
+                                                                    <div class="d-flex justify-content-between align-items-center gap-3">
+                                                                        <div class="d-flex align-items-start gap-2">
+                                                                            <input class="form-check-input mt-1"
+                                                                                   type="checkbox"
+                                                                                   checked="@subtask.IsDone"
+                                                                                   @onchange="() => ToggleSubtask(task.Id, subtask.Id)" />
+                                                                            <div>
+                                                                                <div class="fw-semibold @(subtask.IsDone ? "text-decoration-line-through text-muted" : "")">
+                                                                                    @subtask.Title
+                                                                                </div>
+                                                                                @if (!string.IsNullOrWhiteSpace(subtask.Description))
+                                                                                {
+                                                                                    <div class="small text-muted">@subtask.Description</div>
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <span class="badge @(subtask.IsDone ? "bg-success-subtle text-success-emphasis" : "bg-light text-dark")">
+                                                                            @(subtask.IsDone ? "Done" : "Pending")
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted small">No subtasks defined yet.</div>
+                                                    }
+                                                </div>
+                                            }
                                         </div>
                                     </div>
                                 }
@@ -377,7 +392,7 @@
             }
             else
             {
-                <div class="card border-0 shadow-sm h-100">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center text-center text-muted py-5">
                         <i class="bi bi-kanban fs-1 mb-3"></i>
                         <h5 class="mb-2">Select an Action</h5>
@@ -387,13 +402,13 @@
             }
         </div>
     </div>
-</div>
+@* </div> *@
 
 @if (isActionModalOpen)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
+            <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header">
                     <h5 class="modal-title">@(isEditMode ? "Edit Action" : "Create New Action")</h5>
                     <button type="button" class="btn-close" @onclick="CloseActionModal"></button>
@@ -403,7 +418,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Project</label>
-                            <select class="form-select" @bind="actionForm.ProjectName">
+                            <select class="form-select rounded-3" @bind="actionForm.ProjectName">
                                 @foreach (var project in projects)
                                 {
                                     <option value="@project">@project</option>
@@ -413,12 +428,12 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Title</label>
-                            <input class="form-control" @bind="actionForm.Title" />
+                            <input class="form-control rounded-3" @bind="actionForm.Title" />
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Assigned To</label>
-                            <select class="form-select" @bind="actionForm.AssignedTo">
+                            <select class="form-select rounded-3" @bind="actionForm.AssignedTo">
                                 @foreach (var assignee in assignees)
                                 {
                                     <option value="@assignee">@assignee</option>
@@ -428,12 +443,12 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Assigned By</label>
-                            <input class="form-control" @bind="actionForm.AssignedBy" />
+                            <input class="form-control rounded-3" @bind="actionForm.AssignedBy" />
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
-                            <select class="form-select" @bind="actionForm.Status">
+                            <select class="form-select rounded-3" @bind="actionForm.Status">
                                 @foreach (var status in Enum.GetValues<ActionStatus>())
                                 {
                                     <option value="@status">@status</option>
@@ -443,7 +458,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Priority</label>
-                            <select class="form-select" @bind="actionForm.Priority">
+                            <select class="form-select rounded-3" @bind="actionForm.Priority">
                                 @foreach (var priority in Enum.GetValues<ActionPriority>())
                                 {
                                     <option value="@priority">@priority</option>
@@ -453,19 +468,19 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Due Date</label>
-                            <input class="form-control" type="datetime" @bind="actionForm.DueDateText" />
+                            <input class="form-control rounded-3" type="date" @bind="actionForm.DueDateText" />
                         </div>
 
                         <div class="col-12">
                             <label class="form-label">Description</label>
-                            <textarea class="form-control" rows="4" @bind="actionForm.Description"></textarea>
+                            <textarea class="form-control rounded-3" rows="4" @bind="actionForm.Description"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" @onclick="CloseActionModal">Cancel</button>
-                    <button class="btn btn-primary" @onclick="SaveAction">Save Action</button>
+                    <button class="btn btn-outline-secondary rounded-pill px-3" @onclick="CloseActionModal">Cancel</button>
+                    <button class="btn btn-primary rounded-pill px-3" @onclick="SaveAction">Save Action</button>
                 </div>
             </div>
         </div>
@@ -482,6 +497,8 @@
 
     private bool isActionModalOpen;
     private bool isEditMode;
+
+    private List<int> expandedTaskIds = new();
 
     private List<string> projects = new()
     {
@@ -520,11 +537,28 @@
     {
         actions = SeedActions();
         selectedAction = actions.FirstOrDefault();
+        if (selectedAction is not null)
+        {
+            expandedTaskIds = selectedAction.Tasks.Select(x => x.Id).ToList();
+        }
     }
 
     private void SelectAction(int actionId)
     {
         selectedAction = actions.FirstOrDefault(x => x.Id == actionId);
+        expandedTaskIds = selectedAction?.Tasks.Select(x => x.Id).ToList() ?? new List<int>();
+    }
+
+    private void ToggleTaskDetails(int taskId)
+    {
+        if (expandedTaskIds.Contains(taskId))
+        {
+            expandedTaskIds.Remove(taskId);
+        }
+        else
+        {
+            expandedTaskIds.Add(taskId);
+        }
     }
 
     private void ClearFilters()
@@ -570,7 +604,7 @@
             AssignedBy = selectedAction.AssignedBy,
             Status = selectedAction.Status,
             Priority = selectedAction.Priority,
-            DueDateText = selectedAction.DueDate 
+            DueDateText = selectedAction.DueDate
         };
 
         isActionModalOpen = true;
@@ -611,7 +645,7 @@
         {
             var newAction = new ActionItem
             {
-                Id = actions.Max(x => x.Id) + 1,
+                Id = actions.Count == 0 ? 1 : actions.Max(x => x.Id) + 1,
                 ProjectName = actionForm.ProjectName,
                 Title = actionForm.Title,
                 Description = actionForm.Description,
@@ -625,8 +659,10 @@
 
             actions.Insert(0, newAction);
             selectedAction = newAction;
+            expandedTaskIds = new List<int>();
         }
 
+        UpdateActionProgress(selectedAction!);
         isActionModalOpen = false;
     }
 
@@ -637,7 +673,7 @@
             return;
         }
 
-        var nextTaskId = actions.SelectMany(x => x.Tasks).DefaultIfEmpty().Max(x => x is null ? 0 : x.Id) + 1;
+        var nextTaskId = actions.SelectMany(x => x.Tasks).Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
 
         selectedAction.Tasks.Add(new TaskItem
         {
@@ -650,6 +686,7 @@
             Subtasks = new List<SubtaskItem>()
         });
 
+        expandedTaskIds.Add(nextTaskId);
         UpdateActionProgress(selectedAction);
     }
 
@@ -669,8 +706,9 @@
         var nextSubtaskId = actions
             .SelectMany(x => x.Tasks)
             .SelectMany(x => x.Subtasks)
-            .DefaultIfEmpty()
-            .Max(x => x is null ? 0 : x.Id) + 1;
+            .Select(x => x.Id)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
 
         task.Subtasks.Add(new SubtaskItem
         {
@@ -749,8 +787,8 @@
     }
 
     private bool IsOverdue(ActionItem item) =>
-        
-        item.DueDate.Date < DateTime.Today &&
+        item.DueDate.HasValue &&
+        item.DueDate.Value.Date < DateTime.Today &&
         item.Status != ActionStatus.Completed &&
         item.Status != ActionStatus.Canceled;
 
@@ -914,7 +952,7 @@
         public string AssignedBy { get; set; } = string.Empty;
         public ActionStatus Status { get; set; }
         public ActionPriority Priority { get; set; }
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
         public int Progress { get; set; }
         public List<TaskItem> Tasks { get; set; } = new();
     }
@@ -950,7 +988,7 @@
         public string AssignedBy { get; set; } = string.Empty;
         public ActionStatus Status { get; set; }
         public ActionPriority Priority { get; set; }
-        public DateTime DueDateText { get; set; } 
+        public DateTime? DueDateText { get; set; } 
     }
 
     private enum ActionStatus
