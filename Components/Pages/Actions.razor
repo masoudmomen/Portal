@@ -1,6 +1,8 @@
 ﻿@page "/actions"
+@rendermode InteractiveServer
+@using Portal.Models
+@using Portal.Models.Enums
 
-@* <div class="container-fluid py-4 actions-page"> *@
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
             <h3 class="mb-1 fw-semibold">Actions</h3>
@@ -34,7 +36,7 @@
                 <div class="card-body">
                     <div class="text-muted small mb-1">In Progress</div>
                     <div class="fs-3 fw-bold text-warning">
-                        @FilteredActions.Count(x => x.Status == ActionStatus.InProgress)
+                    @FilteredActions.Count(x => x.Status == EnumsClass.ActionStatus.InProgress)
                     </div>
                 </div>
             </div>
@@ -45,7 +47,7 @@
                 <div class="card-body">
                     <div class="text-muted small mb-1">Completed</div>
                     <div class="fs-3 fw-bold text-success">
-                        @FilteredActions.Count(x => x.Status == ActionStatus.Completed)
+                    @FilteredActions.Count(x => x.Status == EnumsClass.ActionStatus.Completed)
                     </div>
                 </div>
             </div>
@@ -88,7 +90,7 @@
                     <label class="form-label">Status</label>
                     <select class="form-select rounded-3" @bind="selectedStatus">
                         <option value="All">All</option>
-                        @foreach (var status in Enum.GetValues<ActionStatus>())
+                    @foreach (var status in Enum.GetValues<EnumsClass.ActionStatus>())
                         {
                             <option value="@status">@status</option>
                         }
@@ -99,7 +101,7 @@
                     <label class="form-label">Priority</label>
                     <select class="form-select rounded-3" @bind="selectedPriority">
                         <option value="All">All</option>
-                        @foreach (var priority in Enum.GetValues<ActionPriority>())
+                    @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
                         {
                             <option value="@priority">@priority</option>
                         }
@@ -402,7 +404,6 @@
             }
         </div>
     </div>
-@* </div> *@
 
 @if (isActionModalOpen)
 {
@@ -449,7 +450,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <select class="form-select rounded-3" @bind="actionForm.Status">
-                                @foreach (var status in Enum.GetValues<ActionStatus>())
+                                @foreach (var status in Enum.GetValues<EnumsClass.ActionStatus>())
                                 {
                                     <option value="@status">@status</option>
                                 }
@@ -459,7 +460,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Priority</label>
                             <select class="form-select rounded-3" @bind="actionForm.Priority">
-                                @foreach (var priority in Enum.GetValues<ActionPriority>())
+                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
                                 {
                                     <option value="@priority">@priority</option>
                                 }
@@ -516,11 +517,11 @@
         "Neda Hosseini"
     };
 
-    private List<ActionItem> actions = new();
-    private ActionItem? selectedAction;
+    private List<ActionItemModel> actions = new();
+    private ActionItemModel? selectedAction;
     private ActionFormModel actionForm = new();
 
-    private IEnumerable<ActionItem> FilteredActions =>
+    private IEnumerable<ActionItemModel> FilteredActions =>
         actions
             .Where(x => selectedProject == "All" || x.ProjectName == selectedProject)
             .Where(x => selectedStatus == "All" || x.Status.ToString() == selectedStatus)
@@ -578,8 +579,8 @@
             ProjectName = projects.First(),
             AssignedTo = assignees.First(),
             AssignedBy = "Project Manager",
-            Status = ActionStatus.New,
-            Priority = ActionPriority.Medium,
+            Status = EnumsClass.ActionStatus.New,
+            Priority = EnumsClass.ActionPriority.Medium,
             DueDateText = DateTime.Today.AddDays(7)
         };
 
@@ -643,7 +644,7 @@
         }
         else
         {
-            var newAction = new ActionItem
+            var newAction = new ActionItemModel
             {
                 Id = actions.Count == 0 ? 1 : actions.Max(x => x.Id) + 1,
                 ProjectName = actionForm.ProjectName,
@@ -654,7 +655,7 @@
                 Status = actionForm.Status,
                 Priority = actionForm.Priority,
                 DueDate = actionForm.DueDateText,
-                Tasks = new List<TaskItem>()
+                Tasks = new List<TaskItemModel>()
             };
 
             actions.Insert(0, newAction);
@@ -675,15 +676,15 @@
 
         var nextTaskId = actions.SelectMany(x => x.Tasks).Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
 
-        selectedAction.Tasks.Add(new TaskItem
+        selectedAction.Tasks.Add(new TaskItemModel
         {
             Id = nextTaskId,
             Title = "New Task",
             Description = "Define task details here.",
             AssignedTo = selectedAction.AssignedTo,
             DueDate = DateTime.Today.AddDays(3),
-            Status = TaskStatus.New,
-            Subtasks = new List<SubtaskItem>()
+            Status = EnumsClass.TaskStatus.New,
+            Subtasks = new List<SubTaskItemModel>()
         });
 
         expandedTaskIds.Add(nextTaskId);
@@ -710,7 +711,7 @@
             .DefaultIfEmpty(0)
             .Max() + 1;
 
-        task.Subtasks.Add(new SubtaskItem
+        task.Subtasks.Add(new SubTaskItemModel
         {
             Id = nextSubtaskId,
             Title = "New Subtask",
@@ -743,11 +744,11 @@
         UpdateActionProgress(selectedAction);
     }
 
-    private void UpdateTaskProgress(TaskItem task)
+    private void UpdateTaskProgress(TaskItemModel task)
     {
         if (!task.Subtasks.Any())
         {
-            task.Progress = task.Status == TaskStatus.Completed ? 100 : 0;
+            task.Progress = task.Status == EnumsClass.TaskStatus.Completed ? 100 : 0;
         }
         else
         {
@@ -756,17 +757,17 @@
 
         task.Status = task.Progress switch
         {
-            100 => TaskStatus.Completed,
-            > 0 => TaskStatus.InProgress,
-            _ => task.Status == TaskStatus.Blocked ? TaskStatus.Blocked : TaskStatus.New
+            100 => EnumsClass.TaskStatus.Completed,
+            > 0 => EnumsClass.TaskStatus.InProgress,
+            _ => task.Status == EnumsClass.TaskStatus.Blocked ? EnumsClass.TaskStatus.Blocked : EnumsClass.TaskStatus.New
         };
     }
 
-    private void UpdateActionProgress(ActionItem action)
+    private void UpdateActionProgress(ActionItemModel action)
     {
         if (!action.Tasks.Any())
         {
-            action.Progress = action.Status == ActionStatus.Completed ? 100 : 0;
+            action.Progress = action.Status == EnumsClass.ActionStatus.Completed ? 100 : 0;
         }
         else
         {
@@ -780,17 +781,17 @@
 
         action.Status = action.Progress switch
         {
-            100 => ActionStatus.Completed,
-            > 0 => ActionStatus.InProgress,
-            _ => action.Status == ActionStatus.Blocked ? ActionStatus.Blocked : action.Status
+            100 => EnumsClass.ActionStatus.Completed,
+            > 0 => EnumsClass.ActionStatus.InProgress,
+            _ => action.Status == EnumsClass.ActionStatus.Blocked ? EnumsClass.ActionStatus.Blocked : action.Status
         };
     }
 
-    private bool IsOverdue(ActionItem item) =>
+    private bool IsOverdue(ActionItemModel item) =>
         item.DueDate.HasValue &&
         item.DueDate.Value.Date < DateTime.Today &&
-        item.Status != ActionStatus.Completed &&
-        item.Status != ActionStatus.Canceled;
+        item.Status != EnumsClass.ActionStatus.Completed &&
+        item.Status != EnumsClass.ActionStatus.Canceled;
 
     private static DateTime? ParseDate(string? value) =>
         DateTime.TryParse(value, out var result) ? result : null;
@@ -798,23 +799,23 @@
     private static string FormatDate(DateTime? date) =>
         date?.ToString("yyyy/MM/dd") ?? "-";
 
-    private static string GetStatusBadgeClass(ActionStatus status) => status switch
+    private static string GetStatusBadgeClass(EnumsClass.ActionStatus status) => status switch
     {
-        ActionStatus.New => "bg-secondary-subtle text-secondary-emphasis",
-        ActionStatus.Assigned => "bg-primary-subtle text-primary-emphasis",
-        ActionStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
-        ActionStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
-        ActionStatus.Completed => "bg-success-subtle text-success-emphasis",
-        ActionStatus.Canceled => "bg-dark-subtle text-dark-emphasis",
+        EnumsClass.ActionStatus.New => "bg-secondary-subtle text-secondary-emphasis",
+        EnumsClass.ActionStatus.Assigned => "bg-primary-subtle text-primary-emphasis",
+        EnumsClass.ActionStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
+        EnumsClass.ActionStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
+        EnumsClass.ActionStatus.Completed => "bg-success-subtle text-success-emphasis",
+        EnumsClass.ActionStatus.Canceled => "bg-dark-subtle text-dark-emphasis",
         _ => "bg-light text-dark"
     };
 
-    private static string GetTaskStatusBadgeClass(TaskStatus status) => status switch
+    private static string GetTaskStatusBadgeClass(EnumsClass.TaskStatus status) => status switch
     {
-        TaskStatus.New => "bg-secondary-subtle text-secondary-emphasis",
-        TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
-        TaskStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
-        TaskStatus.Completed => "bg-success-subtle text-success-emphasis",
+        EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary-emphasis",
+        EnumsClass.TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
+        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
+        EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success-emphasis",
         _ => "bg-light text-dark"
     };
 
@@ -826,9 +827,9 @@
         _ => "bg-secondary"
     };
 
-    private List<ActionItem> SeedActions()
+    private List<ActionItemModel> SeedActions()
     {
-        var seeded = new List<ActionItem>
+        var seeded = new List<ActionItemModel>
         {
             new()
             {
@@ -838,10 +839,10 @@
                 Description = "Project manager creates an action and assigns dashboard UI work to the responsible engineer.",
                 AssignedBy = "Project Manager",
                 AssignedTo = "Ali Ahmadi",
-                Status = ActionStatus.InProgress,
-                Priority = ActionPriority.High,
+                Status = EnumsClass.ActionStatus.InProgress,
+                Priority = EnumsClass.ActionPriority.High,
                 DueDate = DateTime.Today.AddDays(5),
-                Tasks = new List<TaskItem>
+                Tasks = new List<TaskItemModel>
                 {
                     new()
                     {
@@ -849,9 +850,9 @@
                         Title = "Prepare dashboard wireframe",
                         Description = "Create the initial layout and define KPI cards.",
                         AssignedTo = "Ali Ahmadi",
-                        Status = TaskStatus.InProgress,
+                        Status = EnumsClass.TaskStatus.InProgress,
                         DueDate = DateTime.Today.AddDays(2),
-                        Subtasks = new List<SubtaskItem>
+                        Subtasks = new List<SubTaskItemModel>
                         {
                             new() { Id = 1, Title = "Define page sections", Description = "Header, summary cards, charts, and tables.", IsDone = true, OrderIndex = 1 },
                             new() { Id = 2, Title = "Sketch KPI cards", Description = "Prepare initial wireframe for metrics.", IsDone = true, OrderIndex = 2 },
@@ -864,9 +865,9 @@
                         Title = "Implement dashboard components",
                         Description = "Build the page using Bootstrap cards and responsive layout.",
                         AssignedTo = "Ali Ahmadi",
-                        Status = TaskStatus.New,
+                        Status = EnumsClass.TaskStatus.New,
                         DueDate = DateTime.Today.AddDays(4),
-                        Subtasks = new List<SubtaskItem>
+                        Subtasks = new List<SubTaskItemModel>
                         {
                             new() { Id = 4, Title = "Create statistics cards", Description = "Add visual summary section.", IsDone = false, OrderIndex = 1 },
                             new() { Id = 5, Title = "Add recent activity table", Description = "Show latest updates and statuses.", IsDone = false, OrderIndex = 2 }
@@ -882,10 +883,10 @@
                 Description = "Analyze report categories, data needs, and user expectations.",
                 AssignedBy = "Project Manager",
                 AssignedTo = "Sara Mohammadi",
-                Status = ActionStatus.Assigned,
-                Priority = ActionPriority.Medium,
+                Status = EnumsClass.ActionStatus.Assigned,
+                Priority = EnumsClass.ActionPriority.Medium,
                 DueDate = DateTime.Today.AddDays(8),
-                Tasks = new List<TaskItem>
+                Tasks = new List<TaskItemModel>
                 {
                     new()
                     {
@@ -893,9 +894,9 @@
                         Title = "Collect reporting requirements",
                         Description = "Meet stakeholders and document key report types.",
                         AssignedTo = "Sara Mohammadi",
-                        Status = TaskStatus.New,
+                        Status = EnumsClass.TaskStatus.New,
                         DueDate = DateTime.Today.AddDays(3),
-                        Subtasks = new List<SubtaskItem>
+                        Subtasks = new List<SubTaskItemModel>
                         {
                             new() { Id = 6, Title = "List report consumers", Description = "Managers, engineers, and admins.", IsDone = false, OrderIndex = 1 },
                             new() { Id = 7, Title = "Identify report fields", Description = "Status, progress, owner, deadlines.", IsDone = false, OrderIndex = 2 }
@@ -911,10 +912,10 @@
                 Description = "Track legacy file migration and reassign blocked items where needed.",
                 AssignedBy = "Operations Manager",
                 AssignedTo = "Reza Karimi",
-                Status = ActionStatus.Blocked,
-                Priority = ActionPriority.Critical,
+                Status = EnumsClass.ActionStatus.Blocked,
+                Priority = EnumsClass.ActionPriority.Critical,
                 DueDate = DateTime.Today.AddDays(-2),
-                Tasks = new List<TaskItem>
+                Tasks = new List<TaskItemModel>
                 {
                     new()
                     {
@@ -922,9 +923,9 @@
                         Title = "Validate migrated documents",
                         Description = "Check metadata and access rules.",
                         AssignedTo = "Reza Karimi",
-                        Status = TaskStatus.Blocked,
+                        Status = EnumsClass.TaskStatus.Blocked,
                         DueDate = DateTime.Today.AddDays(-1),
-                        Subtasks = new List<SubtaskItem>
+                        Subtasks = new List<SubTaskItemModel>
                         {
                             new() { Id = 8, Title = "Compare file counts", Description = "Source vs target repository.", IsDone = true, OrderIndex = 1 },
                             new() { Id = 9, Title = "Verify permissions", Description = "Check access by department.", IsDone = false, OrderIndex = 2 }
@@ -942,78 +943,4 @@
         return seeded;
     }
 
-    private class ActionItem
-    {
-        public int Id { get; set; }
-        public string ProjectName { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string AssignedTo { get; set; } = string.Empty;
-        public string AssignedBy { get; set; } = string.Empty;
-        public ActionStatus Status { get; set; }
-        public ActionPriority Priority { get; set; }
-        public DateTime? DueDate { get; set; }
-        public int Progress { get; set; }
-        public List<TaskItem> Tasks { get; set; } = new();
-    }
-
-    private class TaskItem
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string AssignedTo { get; set; } = string.Empty;
-        public TaskStatus Status { get; set; }
-        public DateTime? DueDate { get; set; }
-        public int Progress { get; set; }
-        public List<SubtaskItem> Subtasks { get; set; } = new();
-    }
-
-    private class SubtaskItem
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public bool IsDone { get; set; }
-        public int OrderIndex { get; set; }
-    }
-
-    private class ActionFormModel
-    {
-        public int Id { get; set; }
-        public string ProjectName { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string AssignedTo { get; set; } = string.Empty;
-        public string AssignedBy { get; set; } = string.Empty;
-        public ActionStatus Status { get; set; }
-        public ActionPriority Priority { get; set; }
-        public DateTime? DueDateText { get; set; } 
-    }
-
-    private enum ActionStatus
-    {
-        New,
-        Assigned,
-        InProgress,
-        Blocked,
-        Completed,
-        Canceled
-    }
-
-    private enum TaskStatus
-    {
-        New,
-        InProgress,
-        Blocked,
-        Completed
-    }
-
-    private enum ActionPriority
-    {
-        Low,
-        Medium,
-        High,
-        Critical
-    }
 }

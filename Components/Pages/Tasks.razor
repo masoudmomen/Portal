@@ -1,0 +1,588 @@
+﻿@page "/tasks"
+@rendermode InteractiveServer
+@using Portal.Models
+@using Portal.Models.Enums
+
+    @* Header Section *@
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1 fw-semibold text-dark">Tasks Management</h3>
+            <p class="text-muted mb-0">Monitor tasks, manage subtasks and track execution progress.</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary rounded-pill px-3 shadow-sm" @onclick="ClearFilters">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+            </button>
+            <button class="btn btn-primary rounded-pill px-3 shadow-sm" @onclick="OpenCreateTaskModal">
+                <i class="bi bi-plus-lg me-1"></i> Create Task
+            </button>
+        </div>
+    </div>
+
+    @* KPI Cards *@
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-2">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-list-task text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Total Tasks</div>
+                            <div class="fs-4 fw-bold">@FilteredTasks.Count()</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-2">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-hourglass-split text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">In Progress</div>
+                            <div class="fs-4 fw-bold text-warning">
+                                @FilteredTasks.Count(x => x.Status == EnumsClass.TaskStatus.InProgress)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-2">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-check2-circle text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Completed</div>
+                            <div class="fs-4 fw-bold text-success">
+                                @FilteredTasks.Count(x => x.Status == EnumsClass.TaskStatus.Completed)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-2">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-calendar-x text-danger fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Overdue</div>
+                            <div class="fs-4 fw-bold text-danger">@FilteredTasks.Count(IsOverdue)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Filters *@
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-body bg-white">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <label class="form-label fw-medium small">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input class="form-control bg-light border-0 rounded-end-3" placeholder="Task or project..." @bind="searchTerm" @bind:event="oninput" />
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <label class="form-label fw-medium small">Project</label>
+                    <select class="form-select border-0 bg-light rounded-3" @bind="selectedProject">
+                        <option value="All">All Projects</option>
+                        @foreach (var proj in projects)
+                        {
+                            <option value="@proj">@proj</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label fw-medium small">Status</label>
+                    <select class="form-select border-0 bg-light rounded-3" @bind="selectedStatus">
+                        <option value="All">All Statuses</option>
+                        @foreach (var status in Enum.GetValues<EnumsClass.TaskStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label fw-medium small">Priority</label>
+                    <select class="form-select border-0 bg-light rounded-3" @bind="selectedPriority">
+                        <option value="All">All Priorities</option>
+                        @foreach (var prio in Enum.GetValues<EnumsClass.ActionPriority>())
+                        {
+                            <option value="@prio">@prio</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label class="form-label fw-medium small">Assignee</label>
+                    <select class="form-select border-0 bg-light rounded-3" @bind="selectedAssignee">
+                        <option value="All">All Assignees</option>
+                        @foreach (var user in assignees)
+                        {
+                            <option value="@user">@user</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Main Content Layout *@
+    <div class="row g-4">
+        @* Left Column: Task List *@
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-semibold">Task List</h5>
+                </div>
+                <div class="card-body p-3 overflow-auto" style="max-height: 800px;">
+                    @if (FilteredTasks.Any())
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var task in FilteredTasks)
+                            {
+                                <div class="card border rounded-4 task-item-card transition-all @(selectedTask?.Id == task.Id ? "border-primary bg-primary bg-opacity-10" : "bg-white")"
+                                     style="cursor: pointer;" @onclick="() => SelectTask(task.Id)">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0 fw-bold text-truncate" style="max-width: 200px;">@task.Title</h6>
+                                            <span class="badge rounded-pill @GetStatusBadgeClass(task.Status)">@task.Status</span>
+                                        </div>
+                                        <div class="text-muted small mb-3">@task.ProjectName</div>
+
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small"><i class="bi bi-person me-1"></i> @task.AssignedTo</span>
+                                            <span class="small @(IsOverdue(task) ? "text-danger fw-bold" : "text-muted")">
+                                                <i class="bi bi-calendar3 me-1"></i> @FormatDate(task.DueDate)
+                                            </span>
+                                        </div>
+
+                                        <div class="progress rounded-pill mb-1" style="height: 6px;">
+                                            <div class="progress-bar @GetProgressBarClass(task.Progress)" role="progressbar" style="width: @task.Progress%"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                                            <span>@task.Progress% Complete</span>
+                                            <span>@task.Subtasks.Count Subtasks</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-search fs-1 text-muted opacity-25 d-block mb-3"></i>
+                            <span class="text-muted">No tasks found.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Right Column: Details & Subtasks *@
+        <div class="col-12 col-xl-8">
+            @if (selectedTask != null)
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <h4 class="mb-0 fw-bold text-dark">@selectedTask.Title</h4>
+                                    <span class="badge @GetPriorityBadgeClass(selectedTask.Priority)">@selectedTask.Priority Priority</span>
+                                </div>
+                                <p class="text-muted mb-0">@selectedTask.Description</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="OpenEditTaskModal">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-success rounded-pill px-3" @onclick="AddNewSubtask">
+                                    <i class="bi bi-plus-lg me-1"></i> Add Subtask
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light p-3 rounded-4 border-start border-primary border-4">
+                                    <div class="text-muted small mb-1 text-uppercase fw-bold">Project</div>
+                                    <div class="fw-semibold text-truncate">@selectedTask.ProjectName</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light p-3 rounded-4">
+                                    <div class="text-muted small mb-1 text-uppercase fw-bold">Due Date</div>
+                                    <div class="fw-semibold">@FormatDate(selectedTask.DueDate)</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light p-3 rounded-4">
+                                    <div class="text-muted small mb-1 text-uppercase fw-bold">Assigned To</div>
+                                    <div class="fw-semibold">@selectedTask.AssignedTo</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light p-3 rounded-4">
+                                    <div class="text-muted small mb-1 text-uppercase fw-bold">Progress</div>
+                                    <div class="fw-semibold">@selectedTask.Progress%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold small text-uppercase text-muted">Execution Progress</label>
+                                <span class="fw-bold">@selectedTask.Progress%</span>
+                            </div>
+                            <div class="progress rounded-pill shadow-sm" style="height: 12px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated @GetProgressBarClass(selectedTask.Progress)"
+                                     role="progressbar" style="width: @selectedTask.Progress%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-semibold">Breakdown (Subtasks)</h5>
+                    </div>
+                    <div class="card-body p-4 pt-0">
+                        @if (selectedTask.Subtasks.Any())
+                        {
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var sub in selectedTask.Subtasks.OrderBy(x => x.OrderIndex))
+                                {
+                                    <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-4 border border-white">
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input border-2" style="width: 1.3rem; height: 1.3rem;" type="checkbox" checked="@sub.IsDone" @onchange="() => ToggleSubtask(sub.Id)" />
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold @(sub.IsDone ? "text-decoration-line-through text-muted" : "text-dark")">@sub.Title</div>
+                                            @if (!string.IsNullOrEmpty(sub.Description))
+                                            {
+                                                <div class="small text-muted">@sub.Description</div>
+                                            }
+                                        </div>
+                                        <span class="badge @(sub.IsDone ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning") rounded-pill">
+                                            @(sub.IsDone ? "Done" : "Pending")
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                                <i class="bi bi-card-checklist fs-1 text-muted opacity-25"></i>
+                                <p class="text-muted mt-2">No subtasks defined for this task.</p>
+                                <button class="btn btn-link text-decoration-none" @onclick="AddNewSubtask">Click to add one</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column justify-content-center align-items-center p-5 text-center">
+                    <div class="bg-light p-4 rounded-circle mb-4">
+                        <i class="bi bi-cursor fs-1 text-muted"></i>
+                    </div>
+                    <h5 class="text-dark fw-bold">No Task Selected</h5>
+                    <p class="text-muted">Please select a task from the list on the left to see its full breakdown and manage subtasks.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+@* Task Modal *@
+@if (isTaskModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 p-4 pb-0">
+                    <h5 class="modal-title fw-bold">@(isEditMode ? "Edit Task" : "Create New Task")</h5>
+                    <button type="button" class="btn-close shadow-none" @onclick="CloseTaskModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Project</label>
+                            <select class="form-select rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.ProjectName">
+                                @foreach (var proj in projects)
+                                {
+                                    <option value="@proj">@proj</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Assignee</label>
+                            <select class="form-select rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.AssignedTo">
+                                @foreach (var user in assignees)
+                                {
+                                    <option value="@user">@user</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Task Title</label>
+                            <input class="form-control rounded-3 shadow-none border-light-subtle" placeholder="What needs to be done?" @bind="taskForm.Title" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Status</label>
+                            <select class="form-select rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.Status">
+                                @foreach (var status in Enum.GetValues<EnumsClass.TaskStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Priority</label>
+                            <select class="form-select rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.Priority">
+                                @foreach (var prio in Enum.GetValues<EnumsClass.ActionPriority>())
+                                {
+                                    <option value="@prio">@prio</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Due Date</label>
+                            <input type="date" class="form-control rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.DueDate" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Description</label>
+                            <textarea class="form-control rounded-3 shadow-none border-light-subtle" rows="3" placeholder="Additional details..." @bind="taskForm.Description"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="CloseTaskModal">Cancel</button>
+                    <button class="btn btn-primary rounded-pill px-4 shadow-sm" @onclick="SaveTask">Save Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .tasks-page {
+        background-color: #fcfdfe;
+        min-height: 100vh;
+    }
+
+    .task-item-card {
+        border: 1px solid #edf2f9;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .task-item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important;
+        }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+</style>
+
+@code {
+    private string searchTerm = "";
+    private string selectedProject = "All";
+    private string selectedStatus = "All";
+    private string selectedPriority = "All";
+    private string selectedAssignee = "All";
+
+    private bool isTaskModalOpen = false;
+    private bool isEditMode = false;
+
+    private List<TaskItemModel> tasks = new();
+    private TaskItemModel? selectedTask;
+    private TaskItemModel taskForm = new();
+
+    private List<string> projects = new() { "Corporate Portal", "Engineering Dashboard", "HR Automation" };
+    private List<string> assignees = new() { "Ali Ahmadi", "Sara Mohammadi", "Reza Karimi" };
+
+    protected override void OnInitialized()
+    {
+        tasks = SeedTasks();
+        selectedTask = tasks.FirstOrDefault();
+    }
+
+    private IEnumerable<TaskItemModel> FilteredTasks => tasks
+        .Where(x => selectedProject == "All" || x.ProjectName == selectedProject)
+        .Where(x => selectedStatus == "All" || x.Status.ToString() == selectedStatus)
+        .Where(x => selectedPriority == "All" || x.Priority.ToString() == selectedPriority)
+        .Where(x => selectedAssignee == "All" || x.AssignedTo == selectedAssignee)
+        .Where(x => string.IsNullOrWhiteSpace(searchTerm) ||
+               x.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+               x.ProjectName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private void SelectTask(int id) => selectedTask = tasks.FirstOrDefault(t => t.Id == id);
+
+    private void ClearFilters()
+    {
+        searchTerm = "";
+        selectedProject = selectedStatus = selectedPriority = selectedAssignee = "All";
+    }
+
+    private void OpenCreateTaskModal()
+    {
+        isEditMode = false;
+        taskForm = new TaskItemModel
+        {
+            DueDate = DateTime.Today.AddDays(7),
+            Status = EnumsClass.TaskStatus.New,
+            Priority = EnumsClass.ActionPriority.Medium,
+            ProjectName = projects.First(),
+            AssignedTo = assignees.First()
+        };
+        isTaskModalOpen = true;
+    }
+
+    private void OpenEditTaskModal()
+    {
+        if (selectedTask == null) return;
+        isEditMode = true;
+        taskForm = new TaskItemModel
+        {
+            Id = selectedTask.Id,
+            Title = selectedTask.Title,
+            Description = selectedTask.Description,
+            ProjectName = selectedTask.ProjectName,
+            Status = selectedTask.Status,
+            Priority = selectedTask.Priority,
+            AssignedTo = selectedTask.AssignedTo,
+            DueDate = selectedTask.DueDate
+        };
+        isTaskModalOpen = true;
+    }
+
+    private void CloseTaskModal() => isTaskModalOpen = false;
+
+    private void SaveTask()
+    {
+        if (string.IsNullOrWhiteSpace(taskForm.Title)) return;
+
+        if (isEditMode)
+        {
+            var existing = tasks.FirstOrDefault(t => t.Id == taskForm.Id);
+            if (existing != null)
+            {
+                existing.Title = taskForm.Title;
+                existing.Description = taskForm.Description;
+                existing.ProjectName = taskForm.ProjectName;
+                existing.Status = taskForm.Status;
+                existing.Priority = taskForm.Priority;
+                existing.AssignedTo = taskForm.AssignedTo;
+                existing.DueDate = taskForm.DueDate;
+                UpdateTaskProgress(existing);
+            }
+        }
+        else
+        {
+            taskForm.Id = tasks.Any() ? tasks.Max(t => t.Id) + 1 : 1;
+            taskForm.Subtasks = new List<SubTaskItemModel>();
+            tasks.Insert(0, taskForm);
+            selectedTask = taskForm;
+        }
+        isTaskModalOpen = false;
+    }
+
+    private void AddNewSubtask()
+    {
+        if (selectedTask == null) return;
+        var newSub = new SubTaskItemModel
+        {
+            Id = (tasks.SelectMany(t => t.Subtasks).Any() ? tasks.SelectMany(t => t.Subtasks).Max(s => s.Id) : 0) + 1,
+            Title = "New Subtask Item",
+            IsDone = false,
+            OrderIndex = selectedTask.Subtasks.Count + 1
+        };
+        selectedTask.Subtasks.Add(newSub);
+        UpdateTaskProgress(selectedTask);
+    }
+
+    private void ToggleSubtask(int id)
+    {
+        var sub = selectedTask?.Subtasks.FirstOrDefault(s => s.Id == id);
+        if (sub != null)
+        {
+            sub.IsDone = !sub.IsDone;
+            UpdateTaskProgress(selectedTask!);
+        }
+    }
+
+    private void UpdateTaskProgress(TaskItemModel task)
+    {
+        if (task.Subtasks.Any())
+            task.Progress = (int)Math.Round(task.Subtasks.Count(s => s.IsDone) * 100.0 / task.Subtasks.Count);
+
+        if (task.Progress == 100) task.Status = EnumsClass.TaskStatus.Completed;
+        else if (task.Progress > 0 && task.Status == EnumsClass.TaskStatus.New) task.Status = EnumsClass.TaskStatus.InProgress;
+    }
+
+    private bool IsOverdue(TaskItemModel t) => t.DueDate < DateTime.Today && t.Status != EnumsClass.TaskStatus.Completed;
+    private string FormatDate(DateTime? d) => d?.ToString("yyyy-MM-dd") ?? "N/A";
+
+    private string GetStatusBadgeClass(EnumsClass.TaskStatus s) => s switch
+    {
+        EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary",
+        EnumsClass.TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
+        EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success",
+        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger",
+        _ => "bg-light text-dark"
+    };
+
+    private string GetPriorityBadgeClass(EnumsClass.ActionPriority p) => p switch
+    {
+        EnumsClass.ActionPriority.Critical => "bg-danger text-white",
+        EnumsClass.ActionPriority.High => "bg-danger-subtle text-danger",
+        EnumsClass.ActionPriority.Medium => "bg-primary-subtle text-primary",
+        _ => "bg-light text-dark"
+    };
+
+    private string GetProgressBarClass(int p) => p switch
+    {
+        100 => "bg-success",
+        > 50 => "bg-primary",
+        > 0 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private List<TaskItemModel> SeedTasks()
+    {
+        var list = new List<TaskItemModel>
+        {
+            new() { Id = 1, ProjectName = "Corporate Portal", Title = "Initial Design System", Description = "Develop the main UI library.", AssignedTo = "Ali Ahmadi", DueDate = DateTime.Today.AddDays(2), Status = EnumsClass.TaskStatus.InProgress, Priority = EnumsClass.ActionPriority.High, Subtasks = new() { new() { Id = 101, Title = "Color Palette", IsDone = true }, new() { Id = 102, Title = "Typography", IsDone = false } } },
+            new() { Id = 2, ProjectName = "Engineering Dashboard", Title = "API Integration", Description = "Connect the charts to live data.", AssignedTo = "Sara Mohammadi", DueDate = DateTime.Today.AddDays(-1), Status = EnumsClass.TaskStatus.Blocked, Priority = EnumsClass.ActionPriority.Critical, Subtasks = new() { new() { Id = 103, Title = "Auth Setup", IsDone = false } } }
+        };
+        list.ForEach(UpdateTaskProgress);
+        return list;
+    }
+}
