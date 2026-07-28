@@ -1,0 +1,196 @@
+﻿@page "/login"
+@layout NullLayout
+@rendermode InteractiveServer
+@using Portal.Models
+@inject Portal.Services.AuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="login-page min-vh-100 d-flex align-items-center justify-content-center p-4">
+    <div class="container">
+        <div class="row justify-content-center align-items-center g-4">
+            <div class="col-12 col-lg-10 col-xl-9">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden login-shell">
+                    <div class="row g-0">
+                        
+                        <!-- Left Branding Panel -->
+                        <div class="col-lg-6 d-none d-lg-flex login-brand-panel">
+                            <div class="p-5 d-flex flex-column justify-content-between w-100 text-start">
+                                <div>
+                                    <div class="brand-badge mb-4">
+                                        <span class="brand-dot"></span>
+                                        <span>Project Portal</span>
+                                    </div>
+
+                                    <h1 class="fw-bold text-white mb-3 login-brand-title">
+                                        Unified Management for Projects & Tasks
+                                    </h1>
+
+                                    <p class="text-white-50 fs-6 mb-0">
+                                        A professional ecosystem for operational management, action tracking, task control, and insightful reporting.
+                                    </p>
+                                </div>
+
+                                <div class="portal-feature-list mt-5">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-grid-1x2-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="feature-title">Centralized Dashboard</div>
+                                            <div class="feature-text">Real-time overview of projects and team performance.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-diagram-3-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="feature-title">Hierarchical Workflow</div>
+                                            <div class="feature-text">Manage Action → Task → Subtask with precision.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="feature-item">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-bar-chart-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="feature-title">Structured Reporting</div>
+                                            <div class="feature-text">Log work sessions and generate management reports.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Form Panel -->
+                        <div class="col-12 col-lg-6 bg-white text-start">
+                            <div class="p-4 p-md-5">
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center gap-2 mb-3 d-lg-none">
+                                        <div class="mini-logo">
+                                            <i class="bi bi-kanban-fill"></i>
+                                        </div>
+                                        <span class="fw-semibold text-dark">Project Portal</span>
+                                    </div>
+
+                                    <h3 class="fw-bold mb-2 text-dark">Sign In</h3>
+                                    <p class="text-muted mb-0 small">
+                                        Enter your credentials to access the management panel.
+                                    </p>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                                {
+                                    <div class="alert alert-danger rounded-4 border-0 mb-4 py-2">
+                                        <div class="d-flex align-items-center gap-2 small">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                            <span>@errorMessage</span>
+                                        </div>
+                                    </div>
+                                }
+
+                                <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync">
+                                    <DataAnnotationsValidator />
+
+                                    <div class="mb-3 text-start">
+                                        <label class="form-label fw-semibold small text-dark">Username or Email</label>
+                                        <div class="input-group input-group-modern">
+                                            <span class="input-group-text border-0 bg-transparent">
+                                                <i class="bi bi-person-circle text-muted"></i>
+                                            </span>
+                                            <InputText class="form-control border-0 shadow-none"
+                                                       @bind-Value="loginModel.UserNameOrEmail"
+                                                       placeholder="name@company.com" />
+                                        </div>
+                                        <ValidationMessage For="@(() => loginModel.UserNameOrEmail)" class="text-danger small mt-1" />
+                                    </div>
+
+                                    <div class="mb-3 text-start">
+                                        <label class="form-label fw-semibold small text-dark">Password</label>
+                                        <div class="input-group input-group-modern">
+                                            <span class="input-group-text border-0 bg-transparent">
+                                                <i class="bi bi-shield-lock text-muted"></i>
+                                            </span>
+                                            <InputText type="password"
+                                                       class="form-control border-0 shadow-none"
+                                                       @bind-Value="loginModel.Password"
+                                                       placeholder="••••••••" />
+                                        </div>
+                                        <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small mt-1" />
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                                        <div class="form-check">
+                                            <InputCheckbox class="form-check-input" @bind-Value="loginModel.RememberMe" />
+                                            <label class="form-check-label small text-muted">
+                                                Remember me
+                                            </label>
+                                        </div>
+
+                                        <a href="/forgot-password" class="small text-decoration-none fw-semibold">
+                                            Forgot Password?
+                                        </a>
+                                    </div>
+
+                                    <button type="submit"
+                                            class="btn btn-primary w-100 rounded-4 py-3 fw-semibold shadow-sm"
+                                            disabled="@isSubmitting">
+                                        @if (isSubmitting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                            <span>Signing in...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Sign In</span>
+                                        }
+                                    </button>
+                                </EditForm>
+
+                                <div class="text-center mt-5">
+                                    <span class="text-muted x-small">Enterprise Project Management v1.0.0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private LoginViewModel loginModel = new();
+    private bool isSubmitting;
+    private string? errorMessage;
+
+    private async Task HandleLoginAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(
+                loginModel.UserNameOrEmail,
+                loginModel.Password,
+                loginModel.RememberMe);
+
+            if (result.Succeeded)
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+
+            errorMessage = result.ErrorMessage;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
