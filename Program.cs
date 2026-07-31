@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Portal.Components;
 using Portal.Data;
@@ -9,6 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddControllersWithViews();
+
 
 #region connection string
 
@@ -25,13 +30,16 @@ builder.Services
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = false;
         options.Password.RequireNonAlphanumeric = false;
-
-        options.User.RequireUniqueEmail = true;
-
-        options.SignIn.RequireConfirmedAccount = false;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/access-denied";
+    options.ReturnUrlParameter = "ReturnUrl";
+});
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
@@ -55,12 +63,14 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-app.UseAntiforgery();
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
+
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 
@@ -70,10 +80,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+
 app.Run();
-
-
-
 
 
 

@@ -1,9 +1,9 @@
 ﻿@page "/login"
 @layout NullLayout
 @rendermode InteractiveServer
-@using Portal.Models
-@inject Portal.Services.AuthService AuthService
-@inject NavigationManager Navigation
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
 
 <div class="login-page min-vh-100 d-flex align-items-center justify-content-center p-4">
     <div class="container">
@@ -11,8 +11,7 @@
             <div class="col-12 col-lg-10 col-xl-9">
                 <div class="card border-0 shadow-lg rounded-4 overflow-hidden login-shell">
                     <div class="row g-0">
-                        
-                        <!-- Left Branding Panel -->
+
                         <div class="col-lg-6 d-none d-lg-flex login-brand-panel">
                             <div class="p-5 d-flex flex-column justify-content-between w-100 text-start">
                                 <div>
@@ -64,7 +63,6 @@
                             </div>
                         </div>
 
-                        <!-- Right Form Panel -->
                         <div class="col-12 col-lg-6 bg-white text-start">
                             <div class="p-4 p-md-5">
                                 <div class="mb-4">
@@ -81,18 +79,20 @@
                                     </p>
                                 </div>
 
-                                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
                                 {
                                     <div class="alert alert-danger rounded-4 border-0 mb-4 py-2">
                                         <div class="d-flex align-items-center gap-2 small">
                                             <i class="bi bi-exclamation-triangle-fill"></i>
-                                            <span>@errorMessage</span>
+                                            <span>@ErrorMessage</span>
                                         </div>
                                     </div>
                                 }
 
-                                <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync">
-                                    <DataAnnotationsValidator />
+                                <form method="post" action="/auth/login">
+                                    <AntiforgeryToken />
+
+                                    <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
 
                                     <div class="mb-3 text-start">
                                         <label class="form-label fw-semibold small text-dark">Username or Email</label>
@@ -100,11 +100,12 @@
                                             <span class="input-group-text border-0 bg-transparent">
                                                 <i class="bi bi-person-circle text-muted"></i>
                                             </span>
-                                            <InputText class="form-control border-0 shadow-none"
-                                                       @bind-Value="loginModel.UserNameOrEmail"
-                                                       placeholder="name@company.com" />
+                                            <input type="text"
+                                                   name="UserNameOrEmail"
+                                                   class="form-control border-0 shadow-none"
+                                                   placeholder="name@company.com"
+                                                   required />
                                         </div>
-                                        <ValidationMessage For="@(() => loginModel.UserNameOrEmail)" class="text-danger small mt-1" />
                                     </div>
 
                                     <div class="mb-3 text-start">
@@ -113,41 +114,31 @@
                                             <span class="input-group-text border-0 bg-transparent">
                                                 <i class="bi bi-shield-lock text-muted"></i>
                                             </span>
-                                            <InputText type="password"
-                                                       class="form-control border-0 shadow-none"
-                                                       @bind-Value="loginModel.Password"
-                                                       placeholder="••••••••" />
+                                            <input type="password"
+                                                   name="Password"
+                                                   class="form-control border-0 shadow-none"
+                                                   placeholder="••••••••"
+                                                   required />
                                         </div>
-                                        <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small mt-1" />
                                     </div>
 
                                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                                         <div class="form-check">
-                                            <InputCheckbox class="form-check-input" @bind-Value="loginModel.RememberMe" />
-                                            <label class="form-check-label small text-muted">
+                                            <input type="checkbox"
+                                                   name="RememberMe"
+                                                   value="true"
+                                                   class="form-check-input"
+                                                   id="rememberMeCheck" />
+                                            <label class="form-check-label small text-muted" for="rememberMeCheck">
                                                 Remember me
                                             </label>
                                         </div>
-
-                                        <a href="/forgot-password" class="small text-decoration-none fw-semibold">
-                                            Forgot Password?
-                                        </a>
                                     </div>
 
-                                    <button type="submit"
-                                            class="btn btn-primary w-100 rounded-4 py-3 fw-semibold shadow-sm"
-                                            disabled="@isSubmitting">
-                                        @if (isSubmitting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2"></span>
-                                            <span>Signing in...</span>
-                                        }
-                                        else
-                                        {
-                                            <span>Sign In</span>
-                                        }
+                                    <button type="submit" class="btn btn-primary w-100 rounded-4 py-3 fw-semibold shadow-sm">
+                                        <span>Sign In</span>
                                     </button>
-                                </EditForm>
+                                </form>
 
                                 <div class="text-center mt-5">
                                     <span class="text-muted x-small">Enterprise Project Management v1.0.0</span>
@@ -164,33 +155,9 @@
 
 
 @code {
-    private LoginViewModel loginModel = new();
-    private bool isSubmitting;
-    private string? errorMessage;
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
 
-    private async Task HandleLoginAsync()
-    {
-        isSubmitting = true;
-        errorMessage = null;
-
-        try
-        {
-            var result = await AuthService.LoginAsync(
-                loginModel.UserNameOrEmail,
-                loginModel.Password,
-                loginModel.RememberMe);
-
-            if (result.Succeeded)
-            {
-                Navigation.NavigateTo("/");
-                return;
-            }
-
-            errorMessage = result.ErrorMessage;
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
-    }
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorMessage { get; set; }
 }

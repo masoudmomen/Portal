@@ -6,16 +6,16 @@
     @* Header Section *@
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h3 class="mb-1 fw-semibold text-dark">Tasks Management</h3>
-            <p class="text-muted mb-0">Monitor tasks, manage subtasks and track execution progress.</p>
+        <h2 class="fw-bold text-dark">Tasks Management</h2>
+            <p class="text-muted">Monitor tasks, manage subtasks and track execution progress.</p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-outline-secondary rounded-pill px-3 shadow-sm" @onclick="ClearFilters">
+            <button class="btn btn-outline-secondary px-3 shadow-sm" @onclick="ClearFilters">
                 <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
             </button>
-            <button class="btn btn-primary rounded-pill px-3 shadow-sm" @onclick="OpenCreateTaskModal">
-                <i class="bi bi-plus-lg me-1"></i> Create Task
+            <button class="btn btn-primary px-3 shadow-sm" @onclick="OpenCreateTaskModal">
+                <i class="bi bi-plus-lg me-1"></i> New Task
             </button>
         </div>
     </div>
