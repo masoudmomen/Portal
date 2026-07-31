@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Portal.Data.Entities;
 
 namespace Portal.Data
 {
@@ -10,10 +11,17 @@ namespace Portal.Data
         {
         }
 
-        // در ادامه اینجا DbSetهای پروژه را هم اضافه می‌کنیم
-        // public DbSet<ProjectEntity> Projects => Set<ProjectEntity>();
-        // public DbSet<ActionEntity> Actions => Set<ActionEntity>();
-        // public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
-        // public DbSet<ReportEntity> Reports => Set<ReportEntity>();
+        public DbSet<ProjectEntity> Projects => Set<ProjectEntity>();
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            // تنظیمات اضافی برای اینتیتی پروژه
+            builder.Entity<ProjectEntity>(entity =>
+            {
+                entity.HasIndex(e => e.ProjectCode).IsUnique(); // جلوگیری از کد تکراری
+            });
+        }
     }
 }

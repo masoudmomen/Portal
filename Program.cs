@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,8 +17,7 @@ builder.Services.AddControllersWithViews();
 
 
 #region connection string
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 #endregion
 
@@ -46,7 +46,10 @@ builder.Services.AddAuthorization();
 #endregion
 
 #region IOC
+builder.Services.AddTransient<IProjectService, ProjectService>();
 builder.Services.AddScoped<AuthService>();
+
+
 
 #endregion
 

@@ -28,7 +28,7 @@ namespace Portal.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToLoginWithError("اطلاعات ورود نامعتبر است.", model.ReturnUrl);
+                return RedirectToLoginWithError("Invalid login credentials.", model.ReturnUrl);
             }
 
             var user = model.UserNameOrEmail.Contains("@")
@@ -37,7 +37,7 @@ namespace Portal.Controllers
 
             if (user == null)
             {
-                return RedirectToLoginWithError("نام کاربری یا رمز عبور اشتباه است.", model.ReturnUrl);
+                return RedirectToLoginWithError("Incorrect username or password.", model.ReturnUrl);
             }
 
             var result = await _signInManager.PasswordSignInAsync(
@@ -58,15 +58,15 @@ namespace Portal.Controllers
 
             if (result.IsLockedOut)
             {
-                return RedirectToLoginWithError("حساب کاربری موقتاً قفل شده است.", model.ReturnUrl);
+                return RedirectToLoginWithError("Your account has been temporarily locked.", model.ReturnUrl);
             }
 
             if (result.RequiresTwoFactor)
             {
-                return RedirectToLoginWithError("ورود دومرحله‌ای برای این حساب فعال است.", model.ReturnUrl);
+                return RedirectToLoginWithError("Two-factor authentication is enabled for this account.", model.ReturnUrl);
             }
 
-            return RedirectToLoginWithError("نام کاربری یا رمز عبور اشتباه است.", model.ReturnUrl);
+            return RedirectToLoginWithError("Incorrect username or password.", model.ReturnUrl);
         }
 
         [Authorize]

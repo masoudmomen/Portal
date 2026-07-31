@@ -1,52 +1,95 @@
 ﻿@page "/projects"
 @layout MainLayout
 @rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Web
 @using Portal.Components.PartialComponents
+@using Portal.Data.Entities
+@using Portal.Services
+
+@inject IProjectService ProjectService
+@inject IJSRuntime JSRuntime
 
 <div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark">Project Management</h2>
         <p class="text-muted">Manage and monitor all engineering projects</p>
     </div>
-    <button class="btn btn-primary px-3 shadow-sm" @onclick="OpenCreateModal">
+
+    <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary px-3" @onclick="ClearFilters">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+        </button>
+    <button class="btn btn-primary px-3 shadow-sm"
+            type="button"
+            @onclick="OpenCreateModal">
         New Project
     </button>
+    </div>
 </div>
 
 <!-- Search & Filter Section -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
         <div class="row g-3">
+
             <!-- Search Box -->
             <div class="col-md-6">
                 <div class="input-group search-group">
-                    <input type="text" class="form-control border-end-0" placeholder="Search by Project ID, Name or Manager...">
-                    <button class="btn btn-outline-primary border-start-0 px-3" type="button">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <input type="text"
+                           class="form-control border-end-0"
+                           placeholder="Search by Project Code, Name or Manager..."
+                           @bind="searchTerm"
+                           @bind:event="oninput"
+                           @onkeydown="HandleSearchKeyDown" />
+
+                    <button class="btn btn-outline-primary border-start-0 px-3"
+                            type="button"
+                            title="Search"
+                            disabled="@isLoading"
+                            @onclick="ApplyFilters">
+                        <svg viewBox="0 0 24 24"
+                             width="18"
+                             height="18"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </button>
                 </div>
             </div>
-            
+
             <!-- Filters -->
             <div class="col-md-6">
                 <div class="d-flex gap-2 flex-wrap">
-                    <select class="form-select filter-select">
-                        <option selected>All Types</option>
-                        <option>MEP</option>
-                        <option>Civil</option>
-                        <option>Electrical</option>
+                    <select class="form-select filter-select"
+                            @bind="selectedType"
+                            @bind:after="ApplyFilters"
+                            disabled="@isLoading">
+                        <option value="" >All Types</option>
+                        <option value="MEP">MEP</option>
+                        <option value="Civil">Civil</option>
+                        <option value="Electrical">Electrical</option>
                     </select>
-                    <select class="form-select filter-select">
-                        <option selected>All Statuses</option>
-                        <option>In Progress</option>
-                        <option>Completed</option>
-                        <option>On Hold</option>
+
+                    <select class="form-select filter-select"
+                            @bind="selectedStatus"
+                            @bind:after="ApplyFilters"
+                            disabled="@isLoading">
+                        <option value="" selected>All Statuses</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="On Hold">On Hold</option>
                     </select>
-                    <button class="btn btn-light border px-3">
-                        <i class="bi bi-funnel"></i> Filters
+
+                    <button class="btn btn-light border px-3"
+                            type="button"
+                            disabled="@isLoading"
+                            @onclick="ApplyFilters">
+                        <i class="bi bi-funnel"></i>
+                        Filters
                     </button>
                 </div>
             </div>
@@ -57,10 +100,10 @@
 <!-- Projects Table -->
 <div class="card border-0 shadow-sm">
     <div class="table-responsive" style="min-height:300px;">
-        <table class="table table-hover align-middle mb-0" >
+        <table class="table table-hover align-middle mb-0">
             <thead class="bg-light">
                 <tr>
-                    <th class="ps-4">Project ID</th>
+                    <th class="ps-4">Project Code</th>
                     <th>Project Details</th>
                     <th>Manager / Engineer</th>
                     <th>Due Date</th>
@@ -69,80 +112,150 @@
                     <th class="text-end pe-4">Actions</th>
                 </tr>
             </thead>
+
             <tbody>
-                <!-- Mock Row 1 -->
-                <tr>
-                    <td class="ps-4 fw-bold text-primary">#PRJ-2026-001</td>
-                    <td>
-                        <div class="fw-bold">Pacific Plaza MEP</div>
-                        <div class="small text-muted">Downtown, Sector 4</div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <img src="https://i.pravatar.cc/30?u=1" class="rounded-circle" />
-                            <span>John Doe</span>
-                        </div>
-                    </td>
-                    <td>Oct 15, 2026</td>
-                    <td><span class="badge bg-soft-success text-success">In Progress</span></td>
-                    <td style="width: 150px;">
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-primary" style="width: 65%"></div>
-                        </div>
-                        <span class="small text-muted">65%</span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <div class="dropdown position-relative">
-                            <button class="btn btn-light btn-sm border"
+                @if (isLoading)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border spinner-border-sm text-primary"
+                                 role="status">
+                                <span class="visually-hidden">Loading projects...</span>
+                            </div>
+                            <span class="text-muted ms-2">Loading projects...</span>
+                        </td>
+                    </tr>
+                }
+                else if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-danger mb-2">@errorMessage</div>
+
+                            <button class="btn btn-sm btn-outline-primary"
                                     type="button"
-                                    @onclick="ToggleProjectActionsDropdown">
-                                ...
+                                    @onclick="LoadProjects">
+                                Try Again
                             </button>
+                        </td>
+                    </tr>
+                }
+                else if (projects.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            No projects found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var project in projects)
+                    {
+                        <tr @key="project.Id">
+                            <td class="ps-4 fw-bold text-primary">
+                                @FormatProjectCode(project.ProjectCode)
+                            </td>
 
-                            @if (isProjectActionsDropdownOpen)
-                            {
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm show"
-                                    style="display: block; position: absolute; right: 0; top: 100%; z-index: 1050;">
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item d-flex align-items-center gap-2"
-                                                disabled>
-                                            <i class="bi bi-eye"></i>
-                                            Details
-                                        </button>
-                                    </li>
+                            <td>
+                                <div class="fw-bold">@project.Name</div>
+                                <div class="small text-muted">
+                                    @GetDisplayValue(project.Address)
+                                </div>
+                            </td>
 
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item d-flex align-items-center gap-2"
-                                                @onclick="OpenEditModal">
-                                            <i class="bi bi-pencil-square"></i>
-                                            Edit
-                                        </button>
-                                    </li>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="@GetAvatarUrl(project.Id)"
+                                         class="rounded-circle"
+                                         width="30"
+                                         height="30"
+                                         alt="@GetDisplayValue(project.ProjectManagerName)" />
 
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item text-danger d-flex align-items-center gap-2"
-                                                disabled>
-                                            <i class="bi bi-trash"></i>
-                                            Delete
-                                        </button>
-                                    </li>
-                                </ul>
-                            }
-                        </div>
-                    </td>
+                                    <div>
+                                        <div>@GetDisplayValue(project.ProjectManagerName)</div>
 
+                                        @if (!string.IsNullOrWhiteSpace(project.EngineerName))
+                                        {
+                                            <div class="small text-muted">
+                                                @project.EngineerName
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
 
-                </tr>
-                <!-- More rows would go here -->
+                            <td>@project.DueDate.ToString("MMM dd, yyyy")</td>
+
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(project.Status)">
+                                    @GetDisplayValue(project.Status)
+                                </span>
+                            </td>
+
+                            <td style="width: 150px;">
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary"
+                                         style="@GetProgressStyle(project.Progress)">
+                                    </div>
+                                </div>
+
+                                <span class="small text-muted">
+                                    @ClampProgress(project.Progress)%
+                                </span>
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <div class="dropdown position-relative">
+                                    <button class="btn btn-light btn-sm border"
+                                            type="button"
+                                            aria-label="Project actions"
+                                            aria-expanded="@(openActionsProjectId == project.Id)"
+                                            @onclick="() => ToggleProjectActionsDropdown(project.Id)">
+                                        ...
+                                    </button>
+
+                                    @if (openActionsProjectId == project.Id)
+                                    {
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm show"
+                                            style="display: block; position: absolute; right: 0; top: 100%; z-index: 1050;">
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2"
+                                                        disabled>
+                                                    <i class="bi bi-eye"></i>
+                                                    Details
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2"
+                                                        @onclick="() => OpenEditModal(project)">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    Edit
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                                        @onclick="() => DeleteProject(project)">
+                                                    <i class="bi bi-trash"></i>
+                                                    Delete
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
             </tbody>
         </table>
     </div>
 </div>
-
-
 
 <ProjectFormModal IsVisible="isModalVisible"
                   ExistingProject="selectedProject"
@@ -150,68 +263,242 @@
                   OnSave="HandleProjectSave" />
 
 @code {
-    private bool isModalVisible = false;
-    private ProjectFormModal.ProjectModel? selectedProject = null;
+    private readonly List<ProjectEntity> projects = new();
 
-    private bool isProjectActionsDropdownOpen = false;
+    private ProjectEntity? selectedProject;
+    private int? openActionsProjectId;
 
-    private void ToggleProjectActionsDropdown()
+    private string searchTerm = string.Empty;
+    private string selectedType = string.Empty;
+    private string selectedStatus = string.Empty;
+    private string? errorMessage;
+
+    private bool isModalVisible;
+    private bool isLoading;
+    private bool isSaving;
+
+    protected override async Task OnInitializedAsync()
     {
-        isProjectActionsDropdownOpen = !isProjectActionsDropdownOpen;
+        await LoadProjects();
     }
 
-    private void OpenPacificPlazaEditModal()
+    private async Task LoadProjects()
     {
-        isProjectActionsDropdownOpen = false;
-        //OpenEditModal();
+        if (isLoading)
+        {
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = null;
+        openActionsProjectId = null;
+
+        try
+        {
+            var loadedProjects =
+                await ProjectService.GetAllProjectsAsync(
+                    searchTerm?.Trim(),
+                    selectedType,
+                    selectedStatus);
+
+            projects.Clear();
+            projects.AddRange(loadedProjects);
+        }
+        catch (Exception)
+        {
+            errorMessage = "An error occurred while loading the projects.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    // برای ایجاد پروژه جدید
+    private Task ApplyFilters()
+    {
+        return LoadProjects();
+    }
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await ApplyFilters();
+        }
+    }
+
+    private void ToggleProjectActionsDropdown(int projectId)
+    {
+        openActionsProjectId =
+            openActionsProjectId == projectId
+                ? null
+                : projectId;
+    }
+
     private void OpenCreateModal()
     {
-        selectedProject = null; // اطمینان از حالت Create
+        openActionsProjectId = null;
+        selectedProject = null;
         isModalVisible = true;
     }
 
-    // برای ویرایش پروژه موجود
-    private void OpenEditModal()
+    private void OpenEditModal(ProjectEntity project)
     {
-        //selectedProject = project; // پاس دادن پروژه برای حالت Edit
-        selectedProject = new ProjectFormModal.ProjectModel()
-            {
-                ProjectID = "#PRJ-2026-001",
-                Name = "Pacific Plaza MEP",
-                Type = "MEP",
-                Address = "Downtown, Sector 4",
-                ProjectManager = "John Doe",
-                Engineer = "John Doe",
-                DueDate = new DateTime(2026, 10, 15),
-                Progress = 65
-            };
+        openActionsProjectId = null;
+        selectedProject = project;
         isModalVisible = true;
     }
 
     private void CloseModal()
     {
+        if (isSaving)
+        {
+            return;
+        }
+
         isModalVisible = false;
         selectedProject = null;
     }
 
-    private void HandleProjectSave(ProjectFormModal.ProjectModel savedProject)
+    private async Task HandleProjectSave(ProjectEntity model)
     {
-        if (selectedProject == null)
+        if (isSaving)
         {
-            // منطق Create: اضافه کردن به لیست
-            // projects.Add(savedProject);
+            return;
         }
-        else
+
+        isSaving = true;
+        errorMessage = null;
+
+        try
         {
-            // منطق Edit: پیدا کردن و آپدیت کردن در لیست
-            // var index = projects.FindIndex(p => p.ProjectID == savedProject.ProjectID);
-            // projects[index] = savedProject;
+            bool succeeded;
+
+            if (model.Id == 0)
+            {
+                succeeded =
+                    await ProjectService.CreateProjectAsync(model);
+            }
+            else
+            {
+                succeeded =
+                    await ProjectService.UpdateProjectAsync(model);
+            }
+
+            if (!succeeded)
+            {
+                errorMessage = model.Id == 0
+                    ? "The project could not be created."
+                    : "The project could not be updated.";
+
+                return;
+            }
+
+            isModalVisible = false;
+            selectedProject = null;
+
+            await LoadProjects();
         }
-        
-        isModalVisible = false;
-        // Refresh UI logic...
+        catch (Exception)
+        {
+            errorMessage = model.Id == 0
+                ? "An error occurred while creating the project."
+                : "An error occurred while updating the project.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteProject(ProjectEntity project)
+    {
+        openActionsProjectId = null;
+
+        var projectName = string.IsNullOrWhiteSpace(project.Name)
+            ? project.ProjectCode
+            : project.Name;
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete '{projectName}'?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        errorMessage = null;
+
+        try
+        {
+            var deleted =
+                await ProjectService.DeleteProjectAsync(project.Id);
+
+            if (!deleted)
+            {
+                errorMessage = "The project could not be deleted.";
+                return;
+            }
+
+            await LoadProjects();
+        }
+        catch (Exception)
+        {
+            errorMessage = "An error occurred while deleting the project.";
+        }
+    }
+
+    private static string GetStatusBadgeClass(string? status)
+    {
+        return status switch
+        {
+            "Completed" => "bg-soft-success text-success",
+            "In Progress" => "bg-soft-success text-success",
+            "On Hold" => "bg-soft-warning text-warning",
+            _ => "bg-light text-secondary"
+        };
+    }
+
+    private static int ClampProgress(int progress)
+    {
+        return Math.Clamp(progress, 0, 100);
+    }
+
+    private static string GetProgressStyle(int progress)
+    {
+        return $"width: {ClampProgress(progress)}%";
+    }
+
+    private static string FormatProjectCode(string? projectCode)
+    {
+        if (string.IsNullOrWhiteSpace(projectCode))
+        {
+            return "-";
+        }
+
+        return projectCode.StartsWith('#')
+            ? projectCode
+            : $"#{projectCode}";
+    }
+
+    private static string GetDisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "-"
+            : value;
+    }
+
+    private static string GetAvatarUrl(int projectId)
+    {
+        return $"https://i.pravatar.cc/30?u=project-{projectId}";
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedType = string.Empty;
+        selectedStatus = string.Empty;
+        await LoadProjects();
     }
 }

@@ -1,4 +1,8 @@
-﻿@rendermode InteractiveServer
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Portal.Data.Entities
+@using Portal.Models.Enums
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
 
 @if (IsVisible)
 {
@@ -17,87 +21,113 @@
                 </div>
 
                 <div class="modal-body p-4">
-                    <EditForm Model="@projectModel" OnValidSubmit="HandleSubmit">
+                    <EditForm Model="@projectModel" OnValidSubmit="HandleSubmit" FormName="ProjectForm">
                         <DataAnnotationsValidator />
 
                         <div class="row g-4">
+                            <!-- Project ID/Code -->
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Project ID</label>
-
+                                <label class="form-label small fw-bold text-muted">Project Code</label>
                                 @if (IsEditMode)
                                 {
-                                    <input type="text"
-                                           class="form-control custom-input"
-                                           @bind="projectModel.ProjectID"
-                                           disabled />
+                                    <InputText id="ProjectCode"
+                                               class="form-control custom-input"
+                                               @bind-Value="projectModel.ProjectCode"
+                                               disabled />
                                 }
                                 else
                                 {
-                                    <input type="text"
-                                           class="form-control custom-input"
-                                           @bind="projectModel.ProjectID" />
+                                    <InputText id="ProjectCode"
+                                               class="form-control custom-input"
+                                               @bind-Value="projectModel.ProjectCode" />
                                 }
+                                <ValidationMessage For="@(() => projectModel.ProjectCode)" />
                             </div>
 
+                            <!-- Project Type -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Project Type</label>
-
-                                <select class="form-select custom-input" @bind="projectModel.Type">
+                                <InputSelect id="Type"
+                                             class="form-select custom-input"
+                                             @bind-Value="projectModel.Type">
                                     <option value="MEP">MEP Engineering</option>
                                     <option value="Civil">Civil</option>
                                     <option value="Electrical">Electrical</option>
-                                </select>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => projectModel.Type)" />
                             </div>
 
+                            <!-- Project Name -->
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Project Name</label>
-
-                                <input type="text"
-                                       class="form-control custom-input"
-                                       @bind="projectModel.Name" />
+                                <InputText id="Name"
+                                           class="form-control custom-input"
+                                           @bind-Value="projectModel.Name" />
+                                <ValidationMessage For="@(() => projectModel.Name)" />
                             </div>
 
+                            <!-- Project Address -->
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Project Address</label>
-
-                                <textarea class="form-control custom-input"
-                                          rows="2"
-                                          @bind="projectModel.Address"></textarea>
+                                <InputTextArea id="Address"
+                                               class="form-control custom-input"
+                                               rows="2"
+                                               @bind-Value="projectModel.Address" />
+                                <ValidationMessage For="@(() => projectModel.Address)" />
                             </div>
 
+                            <!-- Project Manager -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Project Manager</label>
-
-                                <input type="text"
-                                       class="form-control custom-input"
-                                       @bind="projectModel.ProjectManager" />
+                                <InputText id="Manager"
+                                           class="form-control custom-input"
+                                           @bind-Value="projectModel.ProjectManagerName" />
+                                <ValidationMessage For="@(() => projectModel.ProjectManagerName)" />
                             </div>
 
+                            <!-- Lead Engineer -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Lead Engineer</label>
-
-                                <input type="text"
-                                       class="form-control custom-input"
-                                       @bind="projectModel.Engineer" />
+                                <InputText id="Engineer"
+                                           class="form-control custom-input"
+                                           @bind-Value="projectModel.EngineerName" />
+                                <ValidationMessage For="@(() => projectModel.EngineerName)" />
                             </div>
 
+                            <!-- Due Date -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Due Date</label>
-
-                                <input type="date"
-                                       class="form-control custom-input"
-                                       @bind="projectModel.DueDate" />
+                                <InputDate id="DueDate"
+                                           class="form-control custom-input"
+                                           @bind-Value="projectModel.DueDate" />
+                                <ValidationMessage For="@(() => projectModel.DueDate)" />
                             </div>
 
+                            <!-- Progress (%) -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Progress (%)</label>
-
-                                <input type="number"
-                                       class="form-control custom-input"
-                                       @bind="projectModel.Progress"
-                                       min="0"
-                                       max="100" />
+                                <InputNumber id="Progress"
+                                             class="form-control custom-input"
+                                             @bind-Value="projectModel.Progress" />
+                                <ValidationMessage For="@(() => projectModel.Progress)" />
                             </div>
+
+                            <!-- Status (Only in Edit Mode) -->
+                            @if (IsEditMode)
+                            {
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-muted">Project Status</label>
+                                    <InputSelect id="Status"
+                                                 class="form-select custom-input"
+                                                 @bind-Value="projectModel.Status">
+                                        @foreach (var status in GetProjectStatuses())
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => projectModel.Status)" />
+                                </div>
+                            }
                         </div>
 
                         <div class="modal-footer border-top-0 pt-4 px-0 d-flex justify-content-end gap-2">
@@ -123,13 +153,14 @@
 
 @code {
     [Parameter] public bool IsVisible { get; set; }
-    [Parameter] public ProjectModel? ExistingProject { get; set; }
+    [Parameter] public ProjectEntity? ExistingProject { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
-    [Parameter] public EventCallback<ProjectModel> OnSave { get; set; }
+    [Parameter] public EventCallback<ProjectEntity> OnSave { get; set; }
 
-    private ProjectModel projectModel = new();
+    // باید از یک مدل مجزا برای فرم استفاده کرد تا Validation و Bindings ها ایزوله بمانند.
+    private ProjectEntity projectModel = new();
 
-    private bool IsEditMode => ExistingProject != null;
+    private bool IsEditMode => ExistingProject != null && ExistingProject.Id != 0;
 
     private string SubmitButtonCssClass =>
         $"btn {(IsEditMode ? "btn-warning" : "btn-primary")} px-4 shadow-sm";
@@ -137,36 +168,66 @@
     protected override void OnParametersSet()
     {
         if (!IsVisible)
+        {
+            // اگر مودال بسته است، هیچ عملیاتی انجام نده.
             return;
+        }
 
-        projectModel = ExistingProject is null
-            ? CreateDefaultProject()
-            : CloneProject(ExistingProject);
+        if (ExistingProject != null)
+        {
+            // در حالت ویرایش: کپی عمیق از مدل ورودی برای جلوگیری از تغییر ناخواسته
+            projectModel = CloneProject(ExistingProject);
+        }
+        else
+        {
+            // در حالت ایجاد: ایجاد یک مدل جدید با مقادیر پیش‌فرض
+            projectModel = CreateDefaultProject();
+        }
     }
 
-    private static ProjectModel CreateDefaultProject()
+    private static ProjectEntity CreateDefaultProject()
     {
-        return new ProjectModel
+        // اعمال مقادیر پیش‌فرض برای فیلدهای جدید
+        return new ProjectEntity
         {
+            ProjectCode = string.Empty,
+            Name = string.Empty,
             Type = "MEP",
-            DueDate = DateTime.Now.AddMonths(3),
-            Progress = 0
+            Address = string.Empty,
+            ProjectManagerName = string.Empty,
+            EngineerName = string.Empty,
+            DueDate = DateTime.Today.AddMonths(3), // تاریخ پیش‌فرض سه ماه آینده
+            Progress = 0,
+            Status = "In Progress" // وضعیت پیش‌فرض برای پروژه جدید
         };
     }
 
-    private static ProjectModel CloneProject(ProjectModel source)
+    private static ProjectEntity CloneProject(ProjectEntity source)
     {
-        return new ProjectModel
+        // یک متد ساده برای کپی کردن Properties از Entity به Model
+        // در صورت نیاز به کپی عمیق‌تر، این متد باید گسترش یابد.
+        return new ProjectEntity
         {
-            ProjectID = source.ProjectID,
+            Id = source.Id,
+            ProjectCode = source.ProjectCode,
             Name = source.Name,
             Type = source.Type,
             Address = source.Address,
-            ProjectManager = source.ProjectManager,
-            Engineer = source.Engineer,
+            ProjectManagerName = source.ProjectManagerName,
+            EngineerName = source.EngineerName,
             DueDate = source.DueDate,
-            Progress = source.Progress
+            Progress = source.Progress,
+            Status = source.Status,
+            CreatedAt = source.CreatedAt,
+            UpdatedAt = source.UpdatedAt
         };
+    }
+
+    private static List<string> GetProjectStatuses()
+    {
+        // می‌توان این لیست را از یک Enum در Portal.Models.Enums.EnumsClass خواند.
+        // فعلاً برای سادگی، مقادیر مورد استفاده در UI را برمی‌گردانیم.
+        return new List<string> { "In Progress", "Completed", "On Hold" };
     }
 
     private async Task Close()
@@ -176,18 +237,8 @@
 
     private async Task HandleSubmit()
     {
+        // قبل از فراخوانی OnSave، وضعیت نهایی را برای ویرایش‌های دیتابیس تنظیم می‌کنیم.
+        // این کار باعث می‌شود پروژه با داده‌های به‌روز شده به کامپوننت Projects.razor برگردد.
         await OnSave.InvokeAsync(projectModel);
-    }
-
-    public class ProjectModel
-    {
-        public string ProjectID { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string Type { get; set; } = "MEP";
-        public string Address { get; set; } = "";
-        public string ProjectManager { get; set; } = "";
-        public string Engineer { get; set; } = "";
-        public DateTime DueDate { get; set; } = DateTime.Now.AddMonths(3);
-        public int Progress { get; set; }
     }
 }
