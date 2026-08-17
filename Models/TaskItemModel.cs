@@ -8,6 +8,7 @@ namespace Portal.Models
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string ProjectName { get; set; } = string.Empty;
+        public int? ProjectId { get; set; }
         public string AssignedTo { get; set; } = string.Empty;
         public EnumsClass.TaskStatus Status { get; set; }
         public DateTime? DueDate { get; set; }

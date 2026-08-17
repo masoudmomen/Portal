@@ -33,5 +33,6 @@ namespace Portal.Data.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+        public List<ActionEntity> Actions { get; set; } = new();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Portal.Models.Enums
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Portal.Models.Enums
 {
     public class EnumsClass
     {
@@ -26,6 +28,20 @@
             Medium,
             High,
             Critical
+        }
+
+        public enum ProjectType
+        {
+            MEP,
+            Civil,
+            Electrical,
+        }
+
+        public enum ProjectStatus
+        {
+            InProgress,
+            Completed,
+            OnHold,
         }
     }
 }

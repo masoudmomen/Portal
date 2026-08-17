@@ -6,6 +6,7 @@
 @using Portal.Components.PartialComponents
 @using Portal.Data.Entities
 @using Portal.Services
+@using Portal.Models.Enums
 
 @inject IProjectService ProjectService
 @inject IJSRuntime JSRuntime
@@ -68,10 +69,11 @@
                             @bind="selectedType"
                             @bind:after="ApplyFilters"
                             disabled="@isLoading">
-                        <option value="" >All Types</option>
-                        <option value="MEP">MEP</option>
-                        <option value="Civil">Civil</option>
-                        <option value="Electrical">Electrical</option>
+                        <option value="">All Types</option>
+                        @foreach (var projectType in Enum.GetValues<EnumsClass.ProjectType>())
+                        {
+                            <option value="@projectType">@projectType</option>
+                        }
                     </select>
 
                     <select class="form-select filter-select"
@@ -82,6 +84,10 @@
                         <option value="In Progress">In Progress</option>
                         <option value="Completed">Completed</option>
                         <option value="On Hold">On Hold</option>
+                        @* @foreach (var projectStatus in Enum.GetValues<EnumsClass.ProjectStatus>())
+                        {
+                            <option value="@projectStatus">@projectStatus</option>
+                        } *@
                     </select>
 
                     <button class="btn btn-light border px-3"
