@@ -48,6 +48,8 @@ builder.Services.AddAuthorization();
 #region IOC
 builder.Services.AddTransient<IProjectService, ProjectService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IActionService, ActionService>();
+
 
 
 

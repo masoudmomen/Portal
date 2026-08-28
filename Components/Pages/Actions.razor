@@ -2,118 +2,129 @@
 @rendermode InteractiveServer
 @using Portal.Models
 @using Portal.Models.Enums
+@using Portal.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IActionService ActionService
+@inject AuthenticationStateProvider AuthStateProvider
 
-
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="container-fluid p-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-        <h2 class="fw-bold text-dark">Actions Management</h2>
-            <p class="text-muted">
-                Manage project actions, assign responsibilities, and track tasks and subtasks.
-            </p>
+            <h3 class="fw-bold text-dark mb-1">Actions Management</h3>
+            <p class="text-muted mb-0">Track, assign, and monitor actionable tasks across projects</p>
         </div>
-
-        <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-outline-secondary px-3" @onclick="ClearFilters">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary d-flex align-items-center gap-2" @onclick="ClearFilters">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z" />
+                    <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466" />
+                </svg>
+                Reset
             </button>
-            <button class="btn btn-primary  px-3" @onclick="OpenCreateActionModal">
-                <i class="bi bi-plus-lg me-1"></i> New Action
+            <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="OpenCreateActionModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                </svg>
+                New Action
             </button>
         </div>
     </div>
 
+    <!-- Summary Metrics -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Total Actions</div>
-                    <div class="fs-3 fw-bold">@FilteredActions.Count()</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="fw-bold mb-0 text-dark">@FilteredActions.Count()</h3>
+                        <span class="badge bg-light text-dark rounded-pill px-3 py-2">All</span>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body">
                     <div class="text-muted small mb-1">In Progress</div>
-                    <div class="fs-3 fw-bold text-warning">
-                    @FilteredActions.Count(x => x.Status == EnumsClass.ActionStatus.InProgress)
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="fw-bold mb-0 text-primary">@FilteredActions.Count(a => a.Status == EnumsClass.ActionStatus.InProgress)</h3>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Active</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Completed</div>
-                    <div class="fs-3 fw-bold text-success">
-                    @FilteredActions.Count(x => x.Status == EnumsClass.ActionStatus.Completed)
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="fw-bold mb-0 text-success">@FilteredActions.Count(a => a.Status == EnumsClass.ActionStatus.Completed)</h3>
+                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Done</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 metric-card">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body">
                     <div class="text-muted small mb-1">Overdue</div>
-                    <div class="fs-3 fw-bold text-danger">
-                        @FilteredActions.Count(IsOverdue)
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="fw-bold mb-0 text-danger">@FilteredActions.Count(IsOverdue)</h3>
+                        <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">Urgent</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <!-- Filters Section -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-12 col-md-6 col-xl-3">
-                    <label class="form-label">Search</label>
-                    <input class="form-control rounded-3"
-                           placeholder="Title, project, assignee..."
-                           @bind="searchTerm" />
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                            </svg>
+                        </span>
+                        <input type="text" class="form-control border-start-0 bg-light" placeholder="Search by title, description..." @bind="searchTerm" @bind:event="oninput" />
+                    </div>
                 </div>
-
-                <div class="col-12 col-md-6 col-xl-3">
-                    <label class="form-label">Project</label>
-                    <select class="form-select rounded-3" @bind="selectedProject">
-                        <option value="All">All</option>
-                        @foreach (var project in projects)
+                <div class="col-6 col-md-2">
+                    <select class="form-select bg-light" @bind="selectedProjectId">
+                        <option value="">All Projects</option>
+                        <option value="0">Independent Actions</option>
+                        @foreach (var project in availableProjects)
                         {
-                            <option value="@project">@project</option>
+                            <option value="@project.Id.ToString()">@project.Title</option>
                         }
                     </select>
                 </div>
-
-                <div class="col-12 col-md-6 col-xl-2">
-                    <label class="form-label">Status</label>
-                    <select class="form-select rounded-3" @bind="selectedStatus">
-                        <option value="All">All</option>
-                    @foreach (var status in Enum.GetValues<EnumsClass.ActionStatus>())
+                <div class="col-6 col-md-2">
+                    <select class="form-select bg-light" @bind="selectedStatus">
+                        <option value="">All Statuses</option>
+                        @foreach (var status in Enum.GetValues<EnumsClass.ActionStatus>())
                         {
                             <option value="@status">@status</option>
                         }
                     </select>
                 </div>
-
-                <div class="col-12 col-md-6 col-xl-2">
-                    <label class="form-label">Priority</label>
-                    <select class="form-select rounded-3" @bind="selectedPriority">
-                        <option value="All">All</option>
-                    @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                <div class="col-6 col-md-2">
+                    <select class="form-select bg-light" @bind="selectedPriority">
+                        <option value="">All Priorities</option>
+                        @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
                         {
                             <option value="@priority">@priority</option>
                         }
                     </select>
                 </div>
-
-                <div class="col-12 col-md-6 col-xl-2">
-                    <label class="form-label">Assignee</label>
-                    <select class="form-select rounded-3" @bind="selectedAssignee">
-                        <option value="All">All</option>
-                        @foreach (var assignee in assignees)
+                <div class="col-6 col-md-2">
+                    <select class="form-select bg-light" @bind="selectedAssignee">
+                        <option value="">All Assignees</option>
+                        @foreach (var assignee in AvailableAssignees)
                         {
                             <option value="@assignee">@assignee</option>
                         }
@@ -123,271 +134,212 @@
         </div>
     </div>
 
+    <!-- Main View: Split Left (List) & Right (Details) -->
     <div class="row g-4">
-        <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-0 pt-3 pb-0 rounded-top-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">Action List</h5>
-                            <div class="text-muted small">@FilteredActions.Count() item(s)</div>
-                        </div>
+        <!-- Left: Action List -->
+        <div class="col-12 col-xl-5">
+            <div class="d-flex flex-column gap-3">
+                @if (isLoading)
+                {
+                    <div class="card border-0 shadow-sm rounded-3 p-4 text-center text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        Loading actions...
                     </div>
-                </div>
-
-                <div class="card-body">
-                    @if (FilteredActions.Any())
+                }
+                else if (!FilteredActions.Any())
+                {
+                    <div class="card border-0 shadow-sm rounded-3 p-4 text-center text-muted">
+                        No actions found matching the filters.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var action in FilteredActions)
                     {
-                        <div class="d-flex flex-column gap-3">
-                            @foreach (var action in FilteredActions)
-                            {
-                                <button type="button"
-                                        class="btn p-0 border-0 bg-transparent text-start"
-                                        @onclick="() => SelectAction(action.Id)">
-                                    <div class="card border rounded-4 action-list-card @(selectedAction?.Id == action.Id ? "selected-action" : "")">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-                                                <div>
-                                                    <h6 class="mb-1 fw-semibold">@action.Title</h6>
-                                                    <div class="text-muted small">@action.ProjectName</div>
-                                                </div>
-                                                <span class="badge @GetStatusBadgeClass(action.Status)">
-                                                    @action.Status
-                                                </span>
-                                            </div>
-
-                                            <div class="small text-muted mb-2">
-                                                Assigned to <span class="fw-semibold">@action.AssignedTo</span>
-                                            </div>
-
-                                            <div class="d-flex justify-content-between small mb-2">
-                                                <span>Priority: <span class="fw-semibold">@action.Priority</span></span>
-                                                <span>Due: @FormatDate(action.DueDate)</span>
-                                            </div>
-
-                                            <div class="progress mb-2 rounded-pill" style="height: 7px;">
-                                                <div class="progress-bar @GetProgressBarClass(action.Progress)"
-                                                     role="progressbar"
-                                                     style="width: @($"{action.Progress}%");">
-                                                </div>
-                                            </div>
-
-                                            <div class="d-flex justify-content-between align-items-center small text-muted">
-                                                <span>@action.Progress% complete</span>
-                                                <span>@action.Tasks.Count task(s)</span>
-                                            </div>
-                                        </div>
+                        var isSelected = selectedAction?.Id == action.Id;
+                        <div class="card border-0 shadow-sm rounded-3 action-item-card @(isSelected ? "border-primary border-2 shadow" : "")"
+                             style="cursor: pointer; transition: all 0.2s ease-in-out;"
+                             @onclick="() => SelectAction(action)">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="badge @GetStatusBadgeClass(action.Status) me-1">@action.Status</span>
+                                        <span class="badge @GetPriorityBadgeClass(action.Priority)">@action.Priority</span>
                                     </div>
-                                </button>
-                            }
+                                    @if (!string.IsNullOrEmpty(action.ProjectName))
+                                    {
+                                        <span class="small text-muted fw-semibold">@action.ProjectName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted fst-italic">Independent Action</span>
+                                    }
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">@action.Title</h6>
+                                <p class="text-muted small mb-3 text-truncate-2">@action.Description</p>
+
+                                <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+                                        </svg>
+                                        @(string.IsNullOrEmpty(action.AssignedTo) ? "Unassigned" : action.AssignedTo)
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1 @(IsOverdue(action) ? "text-danger fw-semibold" : "")">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+                                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+                                        </svg>
+                                        @(action.DueDate?.ToString("MMM dd, yyyy") ?? "No date")
+                                    </div>
+                                </div>
+
+                                <div class="progress rounded-pill" style="height: 6px;">
+                                    <div class="progress-bar @GetProgressBarClass(action.Progress)" role="progressbar" style="width: @(action.Progress)%;" aria-valuenow="@action.Progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
                         </div>
                     }
-                    else
-                    {
-                        <div class="text-center py-5 text-muted">
-                            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                            <div>No actions found.</div>
-                        </div>
-                    }
-                </div>
+                }
             </div>
         </div>
 
-        <div class="col-12 col-xl-8">
-            @if (selectedAction is not null)
+        <!-- Right: Action Details & Tasks -->
+        <div class="col-12 col-xl-7">
+            @if (CurrentVisibleAction != null)
             {
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body">
-                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                                    <h4 class="mb-0">@selectedAction.Title</h4>
-                                    <span class="badge @GetStatusBadgeClass(selectedAction.Status)">
-                                        @selectedAction.Status
-                                    </span>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge @GetStatusBadgeClass(CurrentVisibleAction.Status)">@CurrentVisibleAction.Status</span>
+                                    <span class="badge @GetPriorityBadgeClass(CurrentVisibleAction.Priority)">@CurrentVisibleAction.Priority</span>
+                                    @if (!string.IsNullOrEmpty(CurrentVisibleAction.ProjectName))
+                                    {
+                                        <span class="badge bg-light text-dark border">@CurrentVisibleAction.ProjectName</span>
+                                    }
                                 </div>
-                                <div class="text-muted mb-2">@selectedAction.Description</div>
-                                <div class="small text-muted">
-                                    Project: <span class="fw-semibold">@selectedAction.ProjectName</span>
-                                    |
-                                    Assigned by: <span class="fw-semibold">@selectedAction.AssignedBy</span>
-                                    |
-                                    Assigned to: <span class="fw-semibold">@selectedAction.AssignedTo</span>
-                                </div>
-                            </div>
-
-                            <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" @onclick="OpenEditActionModal">
-                                    <i class="bi bi-pencil-square me-1"></i> Edit
-                                </button>
-                                <button class="btn btn-outline-success btn-sm rounded-pill px-3" @onclick="AddTaskToSelectedAction">
-                                    <i class="bi bi-plus-lg me-1"></i> Add Task
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-6 col-md-3">
-                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
-                                    <div class="text-muted small mb-1">Priority</div>
-                                    <div class="fw-semibold">@selectedAction.Priority</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 col-md-3">
-                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
-                                    <div class="text-muted small mb-1">Due Date</div>
-                                    <div class="fw-semibold">@FormatDate(selectedAction.DueDate)</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 col-md-3">
-                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
-                                    <div class="text-muted small mb-1">Tasks</div>
-                                    <div class="fw-semibold">@selectedAction.Tasks.Count</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 col-md-3">
-                                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
-                                    <div class="text-muted small mb-1">Progress</div>
-                                    <div class="fw-semibold">@selectedAction.Progress%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between small mb-2">
-                                <span>Overall Progress</span>
-                                <span>@selectedAction.Progress%</span>
-                            </div>
-                            <div class="progress rounded-pill" style="height: 9px;">
-                                <div class="progress-bar @GetProgressBarClass(selectedAction.Progress)"
-                                     role="progressbar"
-                                     style="width: @($"{selectedAction.Progress}%");">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-white border-0 pt-3 pb-0 rounded-top-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">Tasks</h5>
+                                <h4 class="fw-bold text-dark mb-1">@CurrentVisibleAction.Title</h4>
                                 <div class="text-muted small">
-                                    Each action can contain multiple tasks and subtasks.
+                                    Assigned to <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(CurrentVisibleAction.AssignedTo) ? "Unassigned" : CurrentVisibleAction.AssignedTo)</span>
+                                    @if (!string.IsNullOrEmpty(CurrentVisibleAction.AssignedBy))
+                                    {
+                                        <span> by <span class="fw-semibold text-dark">@CurrentVisibleAction.AssignedBy</span></span>
+                                    }
                                 </div>
                             </div>
+                            <div class="d-flex gap-2">
+                                <!-- Fixed Edit Button with Proper @onclick -->
+                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @onclick="() => OpenEditActionModal(CurrentVisibleAction)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                    </svg>
+                                    Edit
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="card-body">
-                        @if (selectedAction.Tasks.Any())
+                        <p class="text-muted mb-4">@CurrentVisibleAction.Description</p>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-semibold text-dark">Overall Progress</span>
+                                <span class="small fw-bold text-dark">@CurrentVisibleAction.Progress%</span>
+                            </div>
+                            <div class="progress rounded-pill" style="height: 8px;">
+                                <div class="progress-bar @GetProgressBarClass(CurrentVisibleAction.Progress)" role="progressbar" style="width: @(CurrentVisibleAction.Progress)%;"></div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted opacity-25" />
+
+                        <!-- Tasks Section -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-dark mb-0">Action Tasks (@CurrentVisibleAction.Tasks.Count)</h6>
+                            <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" @onclick="AddTaskToSelectedAction">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                                </svg>
+                                Add Task
+                            </button>
+                        </div>
+
+                        @if (!CurrentVisibleAction.Tasks.Any())
                         {
-                            <div class="d-flex flex-column gap-3">
-                                @foreach (var task in selectedAction.Tasks.OrderBy(x => x.Id))
-                                {
-                                    <div class="card border rounded-4 task-card">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                                <button type="button"
-                                                        class="btn p-0 border-0 bg-transparent text-start flex-grow-1"
-                                                        @onclick="() => ToggleTaskDetails(task.Id)">
-                                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
-                                                        <div>
-                                                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                                <span class="fw-semibold">@task.Title</span>
-                                                                <span class="badge @GetTaskStatusBadgeClass(task.Status)">
-                                                                    @task.Status
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="small text-muted">
-                                                            Owner: @task.AssignedTo | Due: @FormatDate(task.DueDate)
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="progress mt-2 rounded-pill" style="height: 6px;">
-                                                        <div class="progress-bar bg-info"
-                                                             role="progressbar"
-                                                             style="width: @($"{task.Progress}%");">
-                                                        </div>
-                                                    </div>
-                                                </button>
-
-                                                <button class="btn btn-sm btn-light rounded-circle"
-                                                        title="Toggle details"
-                                                        @onclick="() => ToggleTaskDetails(task.Id)">
-                                                    <i class="bi @(expandedTaskIds.Contains(task.Id) ? "bi-chevron-up" : "bi-chevron-down")"></i>
-                                                </button>
-                                            </div>
-
-                                            <div class="mt-3 text-muted small">
-                                                @task.Description
-                                            </div>
-
-                                            @if (expandedTaskIds.Contains(task.Id))
-                                            {
-                                                <div class="mt-3 pt-3 border-top">
-                                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                                        <div class="small text-muted">
-                                                            @task.Subtasks.Count subtask(s) | @task.Progress% completed
-                                                        </div>
-                                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                                                                @onclick="() => AddSubtask(task.Id)">
-                                                            <i class="bi bi-plus-lg me-1"></i> Add Subtask
-                                                        </button>
-                                                    </div>
-
-                                                    @if (task.Subtasks.Any())
-                                                    {
-                                                        <div class="list-group list-group-flush">
-                                                            @foreach (var subtask in task.Subtasks.OrderBy(x => x.OrderIndex))
-                                                            {
-                                                                <div class="list-group-item px-0">
-                                                                    <div class="d-flex justify-content-between align-items-center gap-3">
-                                                                        <div class="d-flex align-items-start gap-2">
-                                                                            <input class="form-check-input mt-1"
-                                                                                   type="checkbox"
-                                                                                   checked="@subtask.IsDone"
-                                                                                   @onchange="() => ToggleSubtask(task.Id, subtask.Id)" />
-                                                                            <div>
-                                                                                <div class="fw-semibold @(subtask.IsDone ? "text-decoration-line-through text-muted" : "")">
-                                                                                    @subtask.Title
-                                                                                </div>
-                                                                                @if (!string.IsNullOrWhiteSpace(subtask.Description))
-                                                                                {
-                                                                                    <div class="small text-muted">@subtask.Description</div>
-                                                                                }
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <span class="badge @(subtask.IsDone ? "bg-success-subtle text-success-emphasis" : "bg-light text-dark")">
-                                                                            @(subtask.IsDone ? "Done" : "Pending")
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div class="text-muted small">No subtasks defined yet.</div>
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                }
+                            <div class="text-center py-4 bg-light rounded-3 text-muted small">
+                                No tasks attached to this action yet. Click "Add Task" to start delegating.
                             </div>
                         }
                         else
                         {
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-list-check fs-1 d-block mb-3"></i>
-                                <div>No tasks added to this action yet.</div>
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var task in CurrentVisibleAction.Tasks)
+                                {
+                                    var isExpanded = expandedTaskIds.Contains(task.Id);
+                                    <div class="border rounded-3 p-3 bg-white">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button class="btn btn-sm btn-light border-0 p-1" @onclick="() => ToggleTaskDetails(task.Id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right")" viewBox="0 0 16 16">
+                                                        @if (isExpanded)
+                                                        {
+                                                            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708" />
+                                                        }
+                                                    </svg>
+                                                </button>
+                                                <div>
+                                                    <div class="fw-semibold text-dark">@task.Title</div>
+                                                    <div class="small text-muted">Assignee: @(string.IsNullOrEmpty(task.AssignedTo) ? "Unassigned" : task.AssignedTo)</div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge @GetTaskStatusBadgeClass(task.Status)">@task.Status</span>
+                                                <span class="small fw-semibold text-muted">@task.Progress%</span>
+                                            </div>
+                                        </div>
+
+                                        @if (isExpanded)
+                                        {
+                                            <div class="mt-3 pt-3 border-top">
+                                                @if (!string.IsNullOrEmpty(task.Description))
+                                                {
+                                                    <p class="small text-muted mb-3">@task.Description</p>
+                                                }
+
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="small fw-bold text-dark">Subtasks</span>
+                                                    <button class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => AddSubtask(task)">+ Add Subtask</button>
+                                                </div>
+
+                                                @if (!task.Subtasks.Any())
+                                                {
+                                                    <div class="small text-muted fst-italic">No subtasks created.</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex flex-column gap-2">
+                                                        @foreach (var subtask in task.Subtasks)
+                                                        {
+                                                            <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-2">
+                                                                <div class="form-check mb-0">
+                                                                    <input class="form-check-input" type="checkbox" checked="@subtask.IsDone" @onchange="() => ToggleSubtask(task, subtask)" id="subtask-@subtask.Id">
+                                                                    <label class="form-check-label small @(subtask.IsDone ? "text-decoration-line-through text-muted" : "text-dark")" for="subtask-@subtask.Id">
+                                                                        @subtask.Title
+                                                                    </label>
+                                                                </div>
+                                                                <span class="badge bg-white text-muted border border-light-subtle small">#@subtask.OrderIndex</span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -395,181 +347,206 @@
             }
             else
             {
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center text-muted py-5">
-                        <i class="bi bi-kanban fs-1 mb-3"></i>
-                        <h5 class="mb-2">Select an Action</h5>
-                        <p class="mb-0">Choose an action from the left list to view its tasks and subtasks.</p>
-                    </div>
+                <div class="card border-0 shadow-sm rounded-3 p-5 text-center text-muted">
+                    @if (!FilteredActions.Any())
+                    {
+                        <h5>No Action Available</h5>
+                        <p class="small mb-0">There are no actions matching the applied filters.</p>
+                    }
+                    else
+                    {
+                        <h5>Select an Action</h5>
+                        <p class="small mb-0">Choose an action from the left pane to view details and manage subtasks.</p>
+                    }
                 </div>
             }
         </div>
     </div>
+</div>
 
+<!-- Modal for Create/Edit Action -->
 @if (isActionModalOpen)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow rounded-4">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-3">
                 <div class="modal-header">
-                    <h5 class="modal-title">@(isEditMode ? "Edit Action" : "Create New Action")</h5>
+                    <h5 class="modal-title fw-bold">@(isEditMode ? "Edit Action" : "Create New Action")</h5>
                     <button type="button" class="btn-close" @onclick="CloseActionModal"></button>
                 </div>
-
                 <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Project</label>
-                            <select class="form-select rounded-3" @bind="actionForm.ProjectName">
-                                @foreach (var project in projects)
-                                {
-                                    <option value="@project">@project</option>
-                                }
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Title</label>
+                        <input type="text" class="form-control" @bind="actionForm.Title" placeholder="e.g. Prepare architecture diagram" />
+                    </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Title</label>
-                            <input class="form-control rounded-3" @bind="actionForm.Title" />
-                        </div>
+                    <!-- Project Selection (Dropdown from DB) -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Project (Optional)</label>
+                        <select class="form-select" @bind="actionForm.ProjectId">
+                            <option value="">None (Independent Action)</option>
+                            @foreach (var project in availableProjects)
+                            {
+                                <option value="@project.Id">@project.Title</option>
+                            }
+                        </select>
+                    </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Assigned To</label>
-                            <select class="form-select rounded-3" @bind="actionForm.AssignedTo">
-                                @foreach (var assignee in assignees)
-                                {
-                                    <option value="@assignee">@assignee</option>
-                                }
-                            </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Assigned To</label>
+                            <input type="text" class="form-control" @bind="actionForm.AssignedTo" placeholder="Assignee Name" />
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Assigned By</label>
-                            <input class="form-control rounded-3" @bind="actionForm.AssignedBy" />
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Assigned By</label>
+                            <input type="text" class="form-control bg-light" @bind="actionForm.AssignedBy" readonly />
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Status</label>
-                            <select class="form-select rounded-3" @bind="actionForm.Status">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Status</label>
+                            <select class="form-select" @bind="actionForm.Status">
                                 @foreach (var status in Enum.GetValues<EnumsClass.ActionStatus>())
                                 {
                                     <option value="@status">@status</option>
                                 }
                             </select>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Priority</label>
-                            <select class="form-select rounded-3" @bind="actionForm.Priority">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Priority</label>
+                            <select class="form-select" @bind="actionForm.Priority">
                                 @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
                                 {
                                     <option value="@priority">@priority</option>
                                 }
                             </select>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Due Date</label>
-                            <input class="form-control rounded-3" type="date" @bind="actionForm.DueDateText" />
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control rounded-3" rows="4" @bind="actionForm.Description"></textarea>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Due Date</label>
+                        <input type="date" class="form-control" @bind="actionForm.DueDateText" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea class="form-control" rows="3" @bind="actionForm.Description" placeholder="Provide additional details..."></textarea>
                     </div>
                 </div>
-
                 <div class="modal-footer">
-                    <button class="btn btn-outline-secondary rounded-pill px-3" @onclick="CloseActionModal">Cancel</button>
-                    <button class="btn btn-primary rounded-pill px-3" @onclick="SaveAction">Save Action</button>
+                    <button type="button" class="btn btn-light" @onclick="CloseActionModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveAction" disabled="@(string.IsNullOrWhiteSpace(actionForm.Title))">
+                        Save Action
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 }
 
-
 @code {
-    private string searchTerm = string.Empty;
-    private string selectedProject = "All";
-    private string selectedStatus = "All";
-    private string selectedPriority = "All";
-    private string selectedAssignee = "All";
-
-    private bool isActionModalOpen;
-    private bool isEditMode;
-
-    private List<int> expandedTaskIds = new();
-
-    private List<string> projects = new()
-    {
-        "Corporate Portal",
-        "Engineering Dashboard",
-        "HR Automation",
-        "Document Control System"
-    };
-
-    private List<string> assignees = new()
-    {
-        "Ali Ahmadi",
-        "Sara Mohammadi",
-        "Reza Karimi",
-        "Neda Hosseini"
-    };
-
     private List<ActionItemModel> actions = new();
+    private List<ProjectLookupModel> availableProjects = new();
     private ActionItemModel? selectedAction;
+    private HashSet<int> expandedTaskIds = new();
+    private bool isLoading = true;
+    private string currentUserName = "Admin";
+
+    // Filters
+    private string searchTerm = string.Empty;
+    private string selectedProjectId = string.Empty;
+    private string selectedStatus = string.Empty;
+    private string selectedPriority = string.Empty;
+    private string selectedAssignee = string.Empty;
+
+    // Modal state
+    private bool isActionModalOpen = false;
+    private bool isEditMode = false;
     private ActionFormModel actionForm = new();
 
-    private IEnumerable<ActionItemModel> FilteredActions =>
-        actions
-            .Where(x => selectedProject == "All" || x.ProjectName == selectedProject)
-            .Where(x => selectedStatus == "All" || x.Status.ToString() == selectedStatus)
-            .Where(x => selectedPriority == "All" || x.Priority.ToString() == selectedPriority)
-            .Where(x => selectedAssignee == "All" || x.AssignedTo == selectedAssignee)
-            .Where(x =>
-                string.IsNullOrWhiteSpace(searchTerm) ||
-                x.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.ProjectName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.AssignedTo.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        actions = SeedActions();
-        selectedAction = actions.FirstOrDefault();
-        if (selectedAction is not null)
+        await LoadUserIdentityAsync();
+        await LoadLookupDataAsync();
+        await LoadActionsAsync();
+    }
+
+    private async Task LoadUserIdentityAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            expandedTaskIds = selectedAction.Tasks.Select(x => x.Id).ToList();
+            currentUserName = user.Identity.Name ?? "Current User";
         }
     }
 
-    private void SelectAction(int actionId)
+    private async Task LoadLookupDataAsync()
     {
-        selectedAction = actions.FirstOrDefault(x => x.Id == actionId);
-        expandedTaskIds = selectedAction?.Tasks.Select(x => x.Id).ToList() ?? new List<int>();
+        availableProjects = await ActionService.GetProjectsLookupAsync();
+    }
+
+    private async Task LoadActionsAsync()
+    {
+        isLoading = true;
+        try
+        {
+            actions = await ActionService.GetAllActionsAsync();
+            if (actions.Any())
+            {
+                if (selectedAction != null)
+                {
+                    selectedAction = actions.FirstOrDefault(a => a.Id == selectedAction.Id) ?? actions.First();
+                }
+                else
+                {
+                    selectedAction = actions.First();
+                }
+            }
+            else
+            {
+                selectedAction = null;
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<string> AvailableAssignees =>
+        actions.Select(a => a.AssignedTo).Where(p => !string.IsNullOrEmpty(p)).Distinct();
+
+    private IEnumerable<ActionItemModel> FilteredActions => actions.Where(a =>
+        (string.IsNullOrWhiteSpace(searchTerm) ||
+            a.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            a.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrEmpty(selectedProjectId) ||
+            (selectedProjectId == "0" && !a.ProjectId.HasValue) ||
+            (a.ProjectId.HasValue && a.ProjectId.Value.ToString() == selectedProjectId)) &&
+        (string.IsNullOrEmpty(selectedStatus) || a.Status.ToString() == selectedStatus) &&
+        (string.IsNullOrEmpty(selectedPriority) || a.Priority.ToString() == selectedPriority) &&
+        (string.IsNullOrEmpty(selectedAssignee) || a.AssignedTo == selectedAssignee)
+    );
+
+    private void SelectAction(ActionItemModel action)
+    {
+        selectedAction = action;
     }
 
     private void ToggleTaskDetails(int taskId)
     {
         if (expandedTaskIds.Contains(taskId))
-        {
             expandedTaskIds.Remove(taskId);
-        }
         else
-        {
             expandedTaskIds.Add(taskId);
-        }
     }
 
     private void ClearFilters()
     {
         searchTerm = string.Empty;
-        selectedProject = "All";
-        selectedStatus = "All";
-        selectedPriority = "All";
-        selectedAssignee = "All";
+        selectedProjectId = string.Empty;
+        selectedStatus = string.Empty;
+        selectedPriority = string.Empty;
+        selectedAssignee = string.Empty;
     }
 
     private void OpenCreateActionModal()
@@ -577,38 +554,30 @@
         isEditMode = false;
         actionForm = new ActionFormModel
         {
-            ProjectName = projects.First(),
-            AssignedTo = assignees.First(),
-            AssignedBy = "Project Manager",
             Status = EnumsClass.ActionStatus.New,
             Priority = EnumsClass.ActionPriority.Medium,
+            AssignedBy = currentUserName,
             DueDateText = DateTime.Today.AddDays(7)
         };
-
         isActionModalOpen = true;
     }
 
-    private void OpenEditActionModal()
+    private void OpenEditActionModal(ActionItemModel action)
     {
-        if (selectedAction is null)
-        {
-            return;
-        }
-
         isEditMode = true;
         actionForm = new ActionFormModel
         {
-            Id = selectedAction.Id,
-            ProjectName = selectedAction.ProjectName,
-            Title = selectedAction.Title,
-            Description = selectedAction.Description,
-            AssignedTo = selectedAction.AssignedTo,
-            AssignedBy = selectedAction.AssignedBy,
-            Status = selectedAction.Status,
-            Priority = selectedAction.Priority,
-            DueDateText = selectedAction.DueDate
+            Id = action.Id,
+            ProjectId = action.ProjectId,
+            ProjectName = action.ProjectName,
+            Title = action.Title,
+            Description = action.Description,
+            AssignedTo = action.AssignedTo,
+            AssignedBy = string.IsNullOrEmpty(action.AssignedBy) ? currentUserName : action.AssignedBy,
+            Status = action.Status,
+            Priority = action.Priority,
+            DueDateText = action.DueDate
         };
-
         isActionModalOpen = true;
     }
 
@@ -617,331 +586,161 @@
         isActionModalOpen = false;
     }
 
-    private void SaveAction()
+    private async Task SaveAction()
     {
         if (string.IsNullOrWhiteSpace(actionForm.Title))
-        {
             return;
-        }
 
         if (isEditMode)
         {
-            var item = actions.FirstOrDefault(x => x.Id == actionForm.Id);
-            if (item is null)
-            {
-                return;
-            }
-
-            item.ProjectName = actionForm.ProjectName;
-            item.Title = actionForm.Title;
-            item.Description = actionForm.Description;
-            item.AssignedTo = actionForm.AssignedTo;
-            item.AssignedBy = actionForm.AssignedBy;
-            item.Status = actionForm.Status;
-            item.Priority = actionForm.Priority;
-            item.DueDate = actionForm.DueDateText;
-
-            selectedAction = item;
+            await ActionService.UpdateActionAsync(actionForm);
         }
         else
         {
-            var newAction = new ActionItemModel
-            {
-                Id = actions.Count == 0 ? 1 : actions.Max(x => x.Id) + 1,
-                ProjectName = actionForm.ProjectName,
-                Title = actionForm.Title,
-                Description = actionForm.Description,
-                AssignedTo = actionForm.AssignedTo,
-                AssignedBy = actionForm.AssignedBy,
-                Status = actionForm.Status,
-                Priority = actionForm.Priority,
-                DueDate = actionForm.DueDateText,
-                Tasks = new List<TaskItemModel>()
-            };
-
-            actions.Insert(0, newAction);
-            selectedAction = newAction;
-            expandedTaskIds = new List<int>();
+            await ActionService.CreateActionAsync(actionForm);
         }
 
-        UpdateActionProgress(selectedAction!);
+        await LoadActionsAsync();
         isActionModalOpen = false;
     }
 
     private void AddTaskToSelectedAction()
     {
-        if (selectedAction is null)
-        {
-            return;
-        }
+        var action = CurrentVisibleAction;
+        if (action == null) return;
 
-        var nextTaskId = actions.SelectMany(x => x.Tasks).Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
-
-        selectedAction.Tasks.Add(new TaskItemModel
+        var nextId = action.Tasks.Any() ? action.Tasks.Max(t => t.Id) + 1 : 1;
+        var newTask = new TaskItemModel
         {
-            Id = nextTaskId,
-            Title = "New Task",
-            Description = "Define task details here.",
-            AssignedTo = selectedAction.AssignedTo,
-            DueDate = DateTime.Today.AddDays(3),
+            Id = nextId,
+            ProjectId = action.ProjectId,
+            ProjectName = action.ProjectName,
+            Title = $"Task #{nextId} - Needs clarification",
+            Description = "Task details will be assigned soon.",
+            AssignedTo = action.AssignedTo,
             Status = EnumsClass.TaskStatus.New,
-            Subtasks = new List<SubTaskItemModel>()
-        });
+            Priority = action.Priority,
+            Progress = 0,
+            DueDate = action.DueDate,
+            Subtasks = new()
+        };
 
-        expandedTaskIds.Add(nextTaskId);
-        UpdateActionProgress(selectedAction);
+        action.Tasks.Add(newTask);
+        expandedTaskIds.Add(newTask.Id);
     }
 
-    private void AddSubtask(int taskId)
+    private void AddSubtask(TaskItemModel task)
     {
-        if (selectedAction is null)
+        var nextId = task.Subtasks.Any() ? task.Subtasks.Max(st => st.Id) + 1 : 1;
+        var nextOrder = task.Subtasks.Count + 1;
+        var newSubtask = new SubTaskItemModel
         {
-            return;
-        }
+            Id = nextId,
+            Title = $"Subtask {nextOrder}",
+            IsDone = false,
+            OrderIndex = nextOrder
+        };
 
-        var task = selectedAction.Tasks.FirstOrDefault(x => x.Id == taskId);
-        if (task is null)
-        {
-            return;
-        }
-
-        var nextSubtaskId = actions
-            .SelectMany(x => x.Tasks)
-            .SelectMany(x => x.Subtasks)
-            .Select(x => x.Id)
-            .DefaultIfEmpty(0)
-            .Max() + 1;
-
-        task.Subtasks.Add(new SubTaskItemModel
-        {
-            Id = nextSubtaskId,
-            Title = "New Subtask",
-            Description = "Define subtask details here.",
-            OrderIndex = task.Subtasks.Count + 1,
-            IsDone = false
-        });
-
+        task.Subtasks.Add(newSubtask);
         UpdateTaskProgress(task);
-        UpdateActionProgress(selectedAction);
     }
 
-    private void ToggleSubtask(int taskId, int subtaskId)
+    private void ToggleSubtask(TaskItemModel task, SubTaskItemModel subtask)
     {
-        if (selectedAction is null)
-        {
-            return;
-        }
-
-        var task = selectedAction.Tasks.FirstOrDefault(x => x.Id == taskId);
-        var subtask = task?.Subtasks.FirstOrDefault(x => x.Id == subtaskId);
-
-        if (task is null || subtask is null)
-        {
-            return;
-        }
-
         subtask.IsDone = !subtask.IsDone;
         UpdateTaskProgress(task);
-        UpdateActionProgress(selectedAction);
     }
 
     private void UpdateTaskProgress(TaskItemModel task)
     {
         if (!task.Subtasks.Any())
-        {
-            task.Progress = task.Status == EnumsClass.TaskStatus.Completed ? 100 : 0;
-        }
-        else
-        {
-            task.Progress = (int)Math.Round(task.Subtasks.Count(x => x.IsDone) * 100.0 / task.Subtasks.Count);
-        }
+            return;
 
-        task.Status = task.Progress switch
+        var doneCount = task.Subtasks.Count(st => st.IsDone);
+        task.Progress = (int)Math.Round((double)doneCount / task.Subtasks.Count * 100);
+
+        if (task.Progress == 100)
+            task.Status = EnumsClass.TaskStatus.Completed;
+        else if (task.Progress > 0)
+            task.Status = EnumsClass.TaskStatus.InProgress;
+        else
+            task.Status = EnumsClass.TaskStatus.New;
+
+        if (selectedAction != null)
         {
-            100 => EnumsClass.TaskStatus.Completed,
-            > 0 => EnumsClass.TaskStatus.InProgress,
-            _ => task.Status == EnumsClass.TaskStatus.Blocked ? EnumsClass.TaskStatus.Blocked : EnumsClass.TaskStatus.New
-        };
+            UpdateActionProgress(selectedAction);
+        }
     }
 
     private void UpdateActionProgress(ActionItemModel action)
     {
-        if (!action.Tasks.Any())
-        {
-            action.Progress = action.Status == EnumsClass.ActionStatus.Completed ? 100 : 0;
-        }
-        else
-        {
-            foreach (var task in action.Tasks)
-            {
-                UpdateTaskProgress(task);
-            }
+        if (!action.Tasks.Any()) return;
+        var avgProgress = action.Tasks.Average(t => t.Progress);
+        action.Progress = (int)Math.Round(avgProgress);
 
-            action.Progress = (int)Math.Round(action.Tasks.Average(x => x.Progress));
-        }
-
-        action.Status = action.Progress switch
-        {
-            100 => EnumsClass.ActionStatus.Completed,
-            > 0 => EnumsClass.ActionStatus.InProgress,
-            _ => action.Status == EnumsClass.ActionStatus.Blocked ? EnumsClass.ActionStatus.Blocked : action.Status
-        };
+        if (action.Progress == 100)
+            action.Status = EnumsClass.ActionStatus.Completed;
+        else if (action.Progress > 0 && action.Status == EnumsClass.ActionStatus.New)
+            action.Status = EnumsClass.ActionStatus.InProgress;
     }
 
-    private bool IsOverdue(ActionItemModel item) =>
-        item.DueDate.HasValue &&
-        item.DueDate.Value.Date < DateTime.Today &&
-        item.Status != EnumsClass.ActionStatus.Completed &&
-        item.Status != EnumsClass.ActionStatus.Canceled;
-
-    private static DateTime? ParseDate(string? value) =>
-        DateTime.TryParse(value, out var result) ? result : null;
-
-    private static string FormatDate(DateTime? date) =>
-        date?.ToString("yyyy/MM/dd") ?? "-";
-
-    private static string GetStatusBadgeClass(EnumsClass.ActionStatus status) => status switch
+    private bool IsOverdue(ActionItemModel action)
     {
-        EnumsClass.ActionStatus.New => "bg-secondary-subtle text-secondary-emphasis",
-        EnumsClass.ActionStatus.Assigned => "bg-primary-subtle text-primary-emphasis",
-        EnumsClass.ActionStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
-        EnumsClass.ActionStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
-        EnumsClass.ActionStatus.Completed => "bg-success-subtle text-success-emphasis",
-        EnumsClass.ActionStatus.Canceled => "bg-dark-subtle text-dark-emphasis",
+        return action.DueDate.HasValue &&
+               action.DueDate.Value.Date < DateTime.Today &&
+               action.Status != EnumsClass.ActionStatus.Completed &&
+               action.Status != EnumsClass.ActionStatus.Canceled;
+    }
+
+    private string GetStatusBadgeClass(EnumsClass.ActionStatus status) => status switch
+    {
+        EnumsClass.ActionStatus.New => "bg-secondary-subtle text-secondary",
+        EnumsClass.ActionStatus.Assigned => "bg-info-subtle text-info",
+        EnumsClass.ActionStatus.InProgress => "bg-primary-subtle text-primary",
+        EnumsClass.ActionStatus.Blocked => "bg-danger-subtle text-danger",
+        EnumsClass.ActionStatus.Completed => "bg-success-subtle text-success",
+        EnumsClass.ActionStatus.Canceled => "bg-dark-subtle text-dark",
         _ => "bg-light text-dark"
     };
 
-    private static string GetTaskStatusBadgeClass(EnumsClass.TaskStatus status) => status switch
+    private string GetTaskStatusBadgeClass(EnumsClass.TaskStatus status) => status switch
     {
-        EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary-emphasis",
-        EnumsClass.TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
-        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger-emphasis",
-        EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success-emphasis",
+        EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary",
+        EnumsClass.TaskStatus.InProgress => "bg-primary-subtle text-primary",
+        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger",
+        EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success",
         _ => "bg-light text-dark"
     };
 
-    private static string GetProgressBarClass(int progress) => progress switch
+    private string GetPriorityBadgeClass(EnumsClass.ActionPriority priority) => priority switch
+    {
+        EnumsClass.ActionPriority.Low => "bg-light text-muted border",
+        EnumsClass.ActionPriority.Medium => "bg-info-subtle text-info",
+        EnumsClass.ActionPriority.High => "bg-warning-subtle text-warning",
+        EnumsClass.ActionPriority.Critical => "bg-danger text-white",
+        _ => "bg-light text-muted"
+    };
+
+    private string GetProgressBarClass(int progress) => progress switch
     {
         >= 100 => "bg-success",
         >= 50 => "bg-primary",
-        > 0 => "bg-warning",
-        _ => "bg-secondary"
+        >= 20 => "bg-warning",
+        _ => "bg-danger"
     };
 
-    private List<ActionItemModel> SeedActions()
+
+    // تضمین می‌کند اکشن انتخاب‌شده حتماً در لیست فیلترشده فعلی وجود داشته باشد
+    private ActionItemModel? CurrentVisibleAction
     {
-        var seeded = new List<ActionItemModel>
+        get
         {
-            new()
-            {
-                Id = 1,
-                ProjectName = "Corporate Portal",
-                Title = "Assign UI implementation for portal dashboard",
-                Description = "Project manager creates an action and assigns dashboard UI work to the responsible engineer.",
-                AssignedBy = "Project Manager",
-                AssignedTo = "Ali Ahmadi",
-                Status = EnumsClass.ActionStatus.InProgress,
-                Priority = EnumsClass.ActionPriority.High,
-                DueDate = DateTime.Today.AddDays(5),
-                Tasks = new List<TaskItemModel>
-                {
-                    new()
-                    {
-                        Id = 1,
-                        Title = "Prepare dashboard wireframe",
-                        Description = "Create the initial layout and define KPI cards.",
-                        AssignedTo = "Ali Ahmadi",
-                        Status = EnumsClass.TaskStatus.InProgress,
-                        DueDate = DateTime.Today.AddDays(2),
-                        Subtasks = new List<SubTaskItemModel>
-                        {
-                            new() { Id = 1, Title = "Define page sections", Description = "Header, summary cards, charts, and tables.", IsDone = true, OrderIndex = 1 },
-                            new() { Id = 2, Title = "Sketch KPI cards", Description = "Prepare initial wireframe for metrics.", IsDone = true, OrderIndex = 2 },
-                            new() { Id = 3, Title = "Review with manager", Description = "Get approval before UI implementation.", IsDone = false, OrderIndex = 3 }
-                        }
-                    },
-                    new()
-                    {
-                        Id = 2,
-                        Title = "Implement dashboard components",
-                        Description = "Build the page using Bootstrap cards and responsive layout.",
-                        AssignedTo = "Ali Ahmadi",
-                        Status = EnumsClass.TaskStatus.New,
-                        DueDate = DateTime.Today.AddDays(4),
-                        Subtasks = new List<SubTaskItemModel>
-                        {
-                            new() { Id = 4, Title = "Create statistics cards", Description = "Add visual summary section.", IsDone = false, OrderIndex = 1 },
-                            new() { Id = 5, Title = "Add recent activity table", Description = "Show latest updates and statuses.", IsDone = false, OrderIndex = 2 }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Id = 2,
-                ProjectName = "Engineering Dashboard",
-                Title = "Delegate reporting module analysis",
-                Description = "Analyze report categories, data needs, and user expectations.",
-                AssignedBy = "Project Manager",
-                AssignedTo = "Sara Mohammadi",
-                Status = EnumsClass.ActionStatus.Assigned,
-                Priority = EnumsClass.ActionPriority.Medium,
-                DueDate = DateTime.Today.AddDays(8),
-                Tasks = new List<TaskItemModel>
-                {
-                    new()
-                    {
-                        Id = 3,
-                        Title = "Collect reporting requirements",
-                        Description = "Meet stakeholders and document key report types.",
-                        AssignedTo = "Sara Mohammadi",
-                        Status = EnumsClass.TaskStatus.New,
-                        DueDate = DateTime.Today.AddDays(3),
-                        Subtasks = new List<SubTaskItemModel>
-                        {
-                            new() { Id = 6, Title = "List report consumers", Description = "Managers, engineers, and admins.", IsDone = false, OrderIndex = 1 },
-                            new() { Id = 7, Title = "Identify report fields", Description = "Status, progress, owner, deadlines.", IsDone = false, OrderIndex = 2 }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Id = 3,
-                ProjectName = "Document Control System",
-                Title = "Follow up overdue document migration",
-                Description = "Track legacy file migration and reassign blocked items where needed.",
-                AssignedBy = "Operations Manager",
-                AssignedTo = "Reza Karimi",
-                Status = EnumsClass.ActionStatus.Blocked,
-                Priority = EnumsClass.ActionPriority.Critical,
-                DueDate = DateTime.Today.AddDays(-2),
-                Tasks = new List<TaskItemModel>
-                {
-                    new()
-                    {
-                        Id = 4,
-                        Title = "Validate migrated documents",
-                        Description = "Check metadata and access rules.",
-                        AssignedTo = "Reza Karimi",
-                        Status = EnumsClass.TaskStatus.Blocked,
-                        DueDate = DateTime.Today.AddDays(-1),
-                        Subtasks = new List<SubTaskItemModel>
-                        {
-                            new() { Id = 8, Title = "Compare file counts", Description = "Source vs target repository.", IsDone = true, OrderIndex = 1 },
-                            new() { Id = 9, Title = "Verify permissions", Description = "Check access by department.", IsDone = false, OrderIndex = 2 }
-                        }
-                    }
-                }
-            }
-        };
+            if (selectedAction == null)
+                return null;
 
-        foreach (var action in seeded)
-        {
-            UpdateActionProgress(action);
+            // اگر اکشن در لیست فیلترشده باشد، همان را برمی‌گرداند؛ در غیر این صورت null
+            return FilteredActions.FirstOrDefault(a => a.Id == selectedAction.Id);
         }
-
-        return seeded;
     }
 
 }
