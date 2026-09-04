@@ -25,6 +25,7 @@ namespace Portal.Services
         Task<SubTaskItemModel?> CreateSubtaskAsync(int taskId, string title, string description = "");
         Task<bool> ToggleSubtaskAsync(int subtaskId, bool isDone);
         Task<bool> DeleteSubtaskAsync(int subtaskId);
+        Task<bool> UpdateSubtaskAsync(int subtaskId, string title, string description);
     }
     public class ActionService : IActionService
     {
@@ -386,6 +387,19 @@ namespace Portal.Services
                 await context.SaveChangesAsync();
             }
 
+            return true;
+        }
+
+        public async Task<bool> UpdateSubtaskAsync(int subtaskId, string title, string description)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var subtask = await context.SubTasks.FindAsync(subtaskId);
+            if (subtask == null) return false;
+
+            subtask.Title = title;
+            subtask.Description = description;
+            subtask.UpdatedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
             return true;
         }
 

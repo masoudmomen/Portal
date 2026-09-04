@@ -256,7 +256,7 @@
                         <!-- Tasks Section -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold text-dark mb-0">Action Tasks (@CurrentVisibleAction.Tasks.Count)</h6>
-                            <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" @onclick="AddTaskToSelectedAction">
+                            <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" @onclick="OpenCreateTaskModal">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                                     <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
                                 </svg>
@@ -292,16 +292,24 @@
                                                     </svg>
                                                 </button>
                                                 <div>
-                                                    <div class="fw-semibold text-dark">@task.Title</div>
+                                                    <div class="fw-semibold text-dark">@task.Title </div>
                                                     <div class="small text-muted">Assignee: @(string.IsNullOrEmpty(task.AssignedTo) ? "Unassigned" : task.AssignedTo)</div>
                                                 </div>
+                                                
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 <span class="badge @GetTaskStatusBadgeClass(task.Status)">@task.Status</span>
                                                 <span class="small fw-semibold text-muted">@task.Progress%</span>
+                                                <button class="btn btn-sm btn-link text-secondary p-1 d-inline" title="Edit Task"
+                                                        @onclick="() => OpenEditTaskModal(task)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
-
+                                        
                                         @if (isExpanded)
                                         {
                                             <div class="mt-3 pt-3 border-top">
@@ -312,7 +320,7 @@
 
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="small fw-bold text-dark">Subtasks</span>
-                                                    <button class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => AddSubtask(task)">+ Add Subtask</button>
+                                                    <button class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => OpenSubtaskModal(null, task.Id)">+ Add Subtask</button>
                                                 </div>
 
                                                 @if (!task.Subtasks.Any())
@@ -326,7 +334,9 @@
                                                         {
                                                             <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-2">
                                                                 <div class="form-check mb-0">
-                                                                    <input class="form-check-input" type="checkbox" checked="@subtask.IsDone" @onchange="() => ToggleSubtask(task, subtask)" id="subtask-@subtask.Id">
+                                                                    <input class="form-check-input mt-1" type="checkbox"
+                                                                           checked="@subtask.IsDone"
+                                                                           @onchange="() => ToggleSubtask(task, subtask)" />
                                                                     <label class="form-check-label small @(subtask.IsDone ? "text-decoration-line-through text-muted" : "text-dark")" for="subtask-@subtask.Id">
                                                                         @subtask.Title
                                                                     </label>
@@ -442,6 +452,96 @@
     </div>
 }
 
+
+@* ===== Task Modal ===== *@
+
+@if (isTaskModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isTaskEditMode ? "Edit Task" : "Create New Task")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseTaskModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" @bind="taskForm.Title" placeholder="Task title" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" class="form-control" @bind="taskForm.AssignedTo" placeholder="Assignee name" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="taskForm.Status">
+                                @foreach (var status in Enum.GetValues<EnumsClass.TaskStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" @bind="taskForm.Priority">
+                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                                {
+                                    <option value="@priority">@priority</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" @bind="taskForm.DueDate" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" @bind="taskForm.Description"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="CloseTaskModal">Cancel</button>
+                    <button class="btn btn-success rounded-pill px-4" @onclick="SaveTask">@(isTaskEditMode ? "Update Task" : "Create Task")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ===== Subtask Modal ===== *@
+
+@if (isSubtaskModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isSubtaskEditMode ? "Edit Subtask" : "Create New Subtask")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseSubtaskModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="subtaskForm.Title" placeholder="Subtask title" />
+                    </div>
+                    <div>
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="subtaskForm.Description"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="CloseSubtaskModal">Cancel</button>
+                    <button class="btn btn-success rounded-pill px-4" @onclick="SaveSubtask">@(isSubtaskEditMode ? "Update Subtask" : "Create Subtask")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
 @code {
     private List<ActionItemModel> actions = new();
     private List<ProjectLookupModel> availableProjects = new();
@@ -467,6 +567,7 @@
         await LoadUserIdentityAsync();
         await LoadLookupDataAsync();
         await LoadActionsAsync();
+        CalculateActionProgressInMemory(selectedAction!);
     }
 
     private async Task LoadUserIdentityAsync()
@@ -604,51 +705,58 @@
         isActionModalOpen = false;
     }
 
-    private void AddTaskToSelectedAction()
-    {
-        var action = CurrentVisibleAction;
-        if (action == null) return;
+    // private async Task AddTaskToSelectedAction()
+    // {
+    //     var action = CurrentVisibleAction;
+    //     if (action == null) return;
 
-        var nextId = action.Tasks.Any() ? action.Tasks.Max(t => t.Id) + 1 : 1;
-        var newTask = new TaskItemModel
+    //     var nextNumber = action.Tasks.Count + 1;
+    //     var newTaskModel = new TaskItemModel
+    //     {
+    //         Title = $"Task #{nextNumber}",
+    //         Description = "Task details to be defined.",
+    //         AssignedTo = action.AssignedTo,
+    //         Status = EnumsClass.TaskStatus.New,
+    //         Priority = action.Priority,
+    //         Progress = 0,
+    //         DueDate = action.DueDate,
+    //         Subtasks = new List<SubTaskItemModel>()
+    //     };
+
+    //     // ذخیره در دیتابیس از طریق سرویس
+    //     var created = await ActionService.CreateTaskAsync(action.Id, newTaskModel);
+    //     if (created != null)
+    //     {
+    //         action.Tasks.Add(created);
+    //         expandedTaskIds.Add(created.Id);
+    //     }
+    // }
+
+    // private async Task AddSubtask(TaskItemModel task)
+    // {
+    //     var nextNumber = task.Subtasks.Count + 1;
+    //     var title = $"Subtask #{nextNumber}";
+
+    //     // ذخیره در دیتابیس از طریق سرویس
+    //     var createdSubtask = await ActionService.CreateSubtaskAsync(task.Id, title);
+    //     if (createdSubtask != null)
+    //     {
+    //         task.Subtasks.Add(createdSubtask);
+    //         RecalculateTaskProgressInMemory(task);
+    //     }
+    // }
+
+    private async Task ToggleSubtask(TaskItemModel task, SubTaskItemModel subtask)
+    {
+        var success = await ActionService.ToggleSubtaskAsync(subtask.Id, !subtask.IsDone);
+        if (success)
         {
-            Id = nextId,
-            ProjectId = action.ProjectId,
-            ProjectName = action.ProjectName,
-            Title = $"Task #{nextId} - Needs clarification",
-            Description = "Task details will be assigned soon.",
-            AssignedTo = action.AssignedTo,
-            Status = EnumsClass.TaskStatus.New,
-            Priority = action.Priority,
-            Progress = 0,
-            DueDate = action.DueDate,
-            Subtasks = new()
-        };
+            subtask.IsDone = !subtask.IsDone;
+            RecalculateTaskProgressInMemory(task);
+            UpdateTaskProgress(task);
+            UpdateActionProgress(CurrentVisibleAction!);
 
-        action.Tasks.Add(newTask);
-        expandedTaskIds.Add(newTask.Id);
-    }
-
-    private void AddSubtask(TaskItemModel task)
-    {
-        var nextId = task.Subtasks.Any() ? task.Subtasks.Max(st => st.Id) + 1 : 1;
-        var nextOrder = task.Subtasks.Count + 1;
-        var newSubtask = new SubTaskItemModel
-        {
-            Id = nextId,
-            Title = $"Subtask {nextOrder}",
-            IsDone = false,
-            OrderIndex = nextOrder
-        };
-
-        task.Subtasks.Add(newSubtask);
-        UpdateTaskProgress(task);
-    }
-
-    private void ToggleSubtask(TaskItemModel task, SubTaskItemModel subtask)
-    {
-        subtask.IsDone = !subtask.IsDone;
-        UpdateTaskProgress(task);
+        }
     }
 
     private void UpdateTaskProgress(TaskItemModel task)
@@ -666,10 +774,11 @@
         else
             task.Status = EnumsClass.TaskStatus.New;
 
-        if (selectedAction != null)
-        {
-            UpdateActionProgress(selectedAction);
-        }
+        ActionService.UpdateTaskAsync(task);
+        // if (selectedAction != null)
+        // {
+        //     UpdateActionProgress(selectedAction);
+        // }
     }
 
     private void UpdateActionProgress(ActionItemModel action)
@@ -680,8 +789,22 @@
 
         if (action.Progress == 100)
             action.Status = EnumsClass.ActionStatus.Completed;
-        else if (action.Progress > 0 && action.Status == EnumsClass.ActionStatus.New)
+        else if (action.Progress < 100)
             action.Status = EnumsClass.ActionStatus.InProgress;
+
+        ActionService.UpdateActionAsync(new ActionFormModel
+        {
+            Id = action.Id,
+            Title= action.Title,
+            Description = action.Description,
+            AssignedBy = action.AssignedBy,
+            AssignedTo= action.AssignedTo,
+            DueDateText = action.DueDate,
+            Priority = action.Priority,
+            ProjectId = action.ProjectId,
+            ProjectName = action.ProjectName,
+            Status = action.Status,
+        });
     }
 
     private bool IsOverdue(ActionItemModel action)
@@ -741,6 +864,216 @@
             // اگر اکشن در لیست فیلترشده باشد، همان را برمی‌گرداند؛ در غیر این صورت null
             return FilteredActions.FirstOrDefault(a => a.Id == selectedAction.Id);
         }
+    }
+
+
+    private void RecalculateTaskProgressInMemory(TaskItemModel task)
+    {
+        if (task.Subtasks.Any())
+        {
+            var completed = task.Subtasks.Count(s => s.IsDone);
+            task.Progress = (int)Math.Round((double)completed / task.Subtasks.Count * 100);
+
+            if (task.Progress == 100)
+                task.Status = EnumsClass.TaskStatus.Completed;
+            // else if (task.Progress > 0 && task.Status == EnumsClass.TaskStatus.New)
+            //     task.Status = EnumsClass.TaskStatus.InProgress;
+            else if (task.Progress < 100)
+                task.Status = EnumsClass.TaskStatus.InProgress;
+        }
+        else
+        {
+            task.Progress = 0;
+            task.Status = EnumsClass.TaskStatus.New;
+        }
+    }
+
+    private void CalculateActionProgressInMemory(ActionItemModel action)
+    {
+        if (!action.Tasks.Any()) return;
+        var avgProgress = action.Tasks.Average(t => t.Progress);
+        action.Progress = (int)Math.Round(avgProgress);
+
+        if (action.Progress == 100)
+            action.Status = EnumsClass.ActionStatus.Completed;
+        else if (action.Progress < 100)
+            action.Status = EnumsClass.ActionStatus.InProgress;
+    }
+
+    //-------------------------------------------------------------------------------
+
+
+
+
+    // ---------- Form state ----------
+    private bool isTaskModalOpen;
+    private bool isTaskEditMode;
+    private bool isSubtaskModalOpen;
+    private bool isSubtaskEditMode;
+    private int editingTaskId;      // real DB Id of the task being edited
+    private int taskModalActionId;  // parent Action Id for new tasks
+    private int subtaskModalTaskId; // parent Task Id for new subtasks
+    private int editingSubtaskId;   // real DB Id of the subtask being edited
+
+    private class TaskFormModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public EnumsClass.TaskStatus Status { get; set; } = EnumsClass.TaskStatus.New;
+        public EnumsClass.ActionPriority Priority { get; set; } = EnumsClass.ActionPriority.Medium;
+        public DateTime? DueDate { get; set; }
+        public int Progress { get; set; }
+    }
+
+    private class SubtaskFormModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private TaskFormModel taskForm = new();
+    private SubtaskFormModel subtaskForm = new();
+
+    // ---------- Task modal ----------
+    private void OpenCreateTaskModal()
+    {
+        if (CurrentVisibleAction == null) return;
+
+        taskModalActionId = CurrentVisibleAction.Id;
+        isTaskEditMode = false;
+        taskForm = new TaskFormModel
+        {
+            AssignedTo = CurrentVisibleAction.AssignedTo,
+            Priority = CurrentVisibleAction.Priority,
+            DueDate = CurrentVisibleAction.DueDate
+        };
+        isTaskModalOpen = true;
+    }
+
+    private void OpenEditTaskModal(TaskItemModel task)
+    {
+        editingTaskId = task.Id;
+        isTaskEditMode = true;
+        taskForm = new TaskFormModel
+        {
+            Title = task.Title,
+            Description = task.Description,
+            AssignedTo = task.AssignedTo,
+            Status = task.Status,
+            Progress = task.Progress,
+            Priority = task.Priority,
+            DueDate = task.DueDate
+        };
+        isTaskModalOpen = true;
+    }
+
+    private void CloseTaskModal() => isTaskModalOpen = false;
+
+    private async Task SaveTask()
+    {
+        if (string.IsNullOrWhiteSpace(taskForm.Title)) return;
+
+        if (isTaskEditMode)
+        {
+            var task = CurrentVisibleAction?.Tasks.FirstOrDefault(t => t.Id == editingTaskId);
+            if (task != null)
+            {
+                // Persist to DB first
+                await ActionService.UpdateTaskAsync(new TaskItemModel
+                {
+                    Id = task.Id,
+                    Title = taskForm.Title,
+                    Description = taskForm.Description,
+                    AssignedTo = taskForm.AssignedTo,
+                    Status = taskForm.Status,
+                    Priority = taskForm.Priority,
+                    Progress = (taskForm.Status == EnumsClass.TaskStatus.Completed && !task.Subtasks.Any())? 100 : 0,
+                    DueDate = taskForm.DueDate
+                });
+
+                // Then update UI state
+                task.Title = taskForm.Title;
+                task.Description = taskForm.Description;
+                task.AssignedTo = taskForm.AssignedTo;
+                task.Status = taskForm.Status;
+                task.Progress = (taskForm.Status == EnumsClass.TaskStatus.Completed && !task.Subtasks.Any()) ? 100 : 0;
+                task.Priority = taskForm.Priority;
+                task.DueDate = taskForm.DueDate;
+            }
+        }
+        else
+        {
+            var newTask = new TaskItemModel
+            {
+                Title = taskForm.Title.Trim(),
+                Description = taskForm.Description,
+                AssignedTo = taskForm.AssignedTo,
+                Status = taskForm.Status,
+                Priority = taskForm.Priority,
+                DueDate = taskForm.DueDate,
+                Progress = (taskForm.Status == EnumsClass.TaskStatus.Completed)? 100 : 0,
+                Subtasks = new List<SubTaskItemModel>()
+            };
+
+            var created = await ActionService.CreateTaskAsync(taskModalActionId, newTask);
+            if (created != null && CurrentVisibleAction != null)
+            {
+                CurrentVisibleAction.Tasks.Add(created);
+                expandedTaskIds.Add(created.Id);
+            }
+        }
+
+        UpdateActionProgress(CurrentVisibleAction!);
+        CloseTaskModal();
+    }
+
+    // ---------- Subtask modal ----------
+    private void OpenSubtaskModal(SubTaskItemModel? subtask, int parentTaskId)
+    {
+        subtaskModalTaskId = parentTaskId;
+        isSubtaskEditMode = subtask != null;
+        editingSubtaskId = subtask?.Id ?? 0;
+        subtaskForm = new SubtaskFormModel
+        {
+            Title = subtask?.Title ?? string.Empty,
+            Description = subtask?.Description ?? string.Empty
+        };
+        isSubtaskModalOpen = true;
+    }
+
+    private void CloseSubtaskModal() => isSubtaskModalOpen = false;
+
+    private async Task SaveSubtask()
+    {
+        if (string.IsNullOrWhiteSpace(subtaskForm.Title)) return;
+
+        var parentTask = CurrentVisibleAction?.Tasks.FirstOrDefault(t => t.Id == subtaskModalTaskId);
+        if (parentTask == null) return;
+
+        if (isSubtaskEditMode)
+        {
+            var subtask = parentTask.Subtasks.FirstOrDefault(s => s.Id == editingSubtaskId);
+            if (subtask != null)
+            {
+                subtask.Title = subtaskForm.Title.Trim();
+                subtask.Description = subtaskForm.Description;
+                await ActionService.UpdateSubtaskAsync(subtask.Id, subtask.Title, subtaskForm.Description);
+            }
+        }
+        else
+        {
+            var created = await ActionService.CreateSubtaskAsync(subtaskModalTaskId, subtaskForm.Title.Trim(), subtaskForm.Description);
+            if (created != null)
+            {
+                parentTask.Subtasks.Add(created);
+                RecalculateTaskProgressInMemory(parentTask);
+            }
+        }
+
+        UpdateTaskProgress(parentTask);
+        UpdateActionProgress(CurrentVisibleAction!);
+        CloseSubtaskModal();
     }
 
 }
