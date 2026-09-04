@@ -7,12 +7,11 @@
 @inject IActionService ActionService
 @inject AuthenticationStateProvider AuthStateProvider
 
-<div class="container-fluid p-4">
     <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h3 class="fw-bold text-dark mb-1">Actions Management</h3>
-            <p class="text-muted mb-0">Track, assign, and monitor actionable tasks across projects</p>
+        <h2 class="fw-bold text-dark">Actions Management</h2>
+            <p class="text-muted">Track, assign, and monitor actionable tasks across projects</p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary d-flex align-items-center gap-2" @onclick="ClearFilters">
@@ -372,7 +371,7 @@
             }
         </div>
     </div>
-</div>
+
 
 <!-- Modal for Create/Edit Action -->
 @if (isActionModalOpen)
@@ -890,14 +889,18 @@
 
     private void CalculateActionProgressInMemory(ActionItemModel action)
     {
-        if (!action.Tasks.Any()) return;
-        var avgProgress = action.Tasks.Average(t => t.Progress);
-        action.Progress = (int)Math.Round(avgProgress);
+        if (action != null)
+        {
+            if (action.Tasks.Any()) return;
 
-        if (action.Progress == 100)
-            action.Status = EnumsClass.ActionStatus.Completed;
-        else if (action.Progress < 100)
-            action.Status = EnumsClass.ActionStatus.InProgress;
+            var avgProgress = action.Tasks.Average(t => t.Progress);
+            action.Progress = (int)Math.Round(avgProgress);
+
+            if (action.Progress == 100)
+                action.Status = EnumsClass.ActionStatus.Completed;
+            else if (action.Progress < 100)
+                action.Status = EnumsClass.ActionStatus.InProgress;
+        }
     }
 
     //-------------------------------------------------------------------------------

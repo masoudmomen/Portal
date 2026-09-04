@@ -16,16 +16,21 @@
         <h2 class="fw-bold text-dark">Project Management</h2>
         <p class="text-muted">Manage and monitor all engineering projects</p>
     </div>
-
-    <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-outline-secondary px-3" @onclick="ClearFilters">
-            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+    
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary d-flex align-items-center gap-2" @onclick="ClearFilters">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z" />
+                <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466" />
+            </svg>
+            Reset
         </button>
-        <button class="btn btn-primary  px-3"
-            type="button"
-            @onclick="OpenCreateModal">
-        New Project
-    </button>
+        <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="OpenCreateModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+            </svg>
+            New Project
+        </button>
     </div>
 </div>
 
