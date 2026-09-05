@@ -566,7 +566,7 @@
         await LoadUserIdentityAsync();
         await LoadLookupDataAsync();
         await LoadActionsAsync();
-        CalculateActionProgressInMemory(selectedAction!);
+        CalculateActionProgressInMemory(FilteredActions!);
     }
 
     private async Task LoadUserIdentityAsync()
@@ -887,19 +887,22 @@
         }
     }
 
-    private void CalculateActionProgressInMemory(ActionItemModel action)
+    private void CalculateActionProgressInMemory(IEnumerable<ActionItemModel> actions)
     {
-        if (action != null)
+        foreach(var action in actions)
         {
-            if (action.Tasks.Any()) return;
+            if (action != null)
+            {
+                if (!action.Tasks.Any()) return;
 
-            var avgProgress = action.Tasks.Average(t => t.Progress);
-            action.Progress = (int)Math.Round(avgProgress);
+                var avgProgress = action.Tasks.Average(t => t.Progress);
+                action.Progress = (int)Math.Round(avgProgress);
 
-            if (action.Progress == 100)
-                action.Status = EnumsClass.ActionStatus.Completed;
-            else if (action.Progress < 100)
-                action.Status = EnumsClass.ActionStatus.InProgress;
+                if (action.Progress == 100)
+                    action.Status = EnumsClass.ActionStatus.Completed;
+                else if (action.Progress < 100)
+                    action.Status = EnumsClass.ActionStatus.InProgress;
+            }
         }
     }
 
