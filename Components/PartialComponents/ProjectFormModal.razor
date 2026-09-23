@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
 @using Portal.Data.Entities
+@using Portal.Models
 @using Portal.Models.Enums
 @using System.ComponentModel.DataAnnotations
 @rendermode InteractiveServer
@@ -79,19 +80,31 @@
                             <!-- Project Manager -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Project Manager</label>
-                                <InputText id="Manager"
-                                           class="form-control custom-input"
-                                           @bind-Value="projectModel.ProjectManagerName" />
-                                <ValidationMessage For="@(() => projectModel.ProjectManagerName)" />
+                                <InputSelect id="Manager"
+                                             class="form-select custom-input"
+                                             @bind-Value="projectModel.ProjectManagerUserId">
+                                    <option value="">Select project manager</option>
+                                    @foreach (var user in AvailableUsers)
+                                    {
+                                        <option value="@user.Id">@user.DisplayName</option>
+                                    }
+                                </InputSelect>
                             </div>
 
                             <!-- Lead Engineer -->
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Lead Engineer</label>
-                                <InputText id="Engineer"
-                                           class="form-control custom-input"
-                                           @bind-Value="projectModel.EngineerName" />
-                                <ValidationMessage For="@(() => projectModel.EngineerName)" />
+                                <label class="form-label small fw-bold text-muted">Lead Engineer(s)</label>
+                                <InputSelect id="Engineer"
+                                             class="form-select custom-input"
+                                             TValue="string[]"
+                                             multiple
+                                             @bind-Value="selectedEngineerIds">
+                                    @foreach (var user in AvailableUsers)
+                                    {
+                                        <option value="@user.Id">@user.DisplayName</option>
+                                    }
+                                </InputSelect>
+                                <div class="form-text">Hold Ctrl or Cmd to select multiple engineers.</div>
                             </div>
 
                             <!-- Due Date -->
@@ -101,15 +114,6 @@
                                            class="form-control custom-input"
                                            @bind-Value="projectModel.DueDate" />
                                 <ValidationMessage For="@(() => projectModel.DueDate)" />
-                            </div>
-
-                            <!-- Progress (%) -->
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Progress (%)</label>
-                                <InputNumber id="Progress"
-                                             class="form-control custom-input"
-                                             @bind-Value="projectModel.Progress" />
-                                <ValidationMessage For="@(() => projectModel.Progress)" />
                             </div>
 
                             <!-- Status (Only in Edit Mode) -->
@@ -156,9 +160,11 @@
     [Parameter] public ProjectEntity? ExistingProject { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<ProjectEntity> OnSave { get; set; }
+    [Parameter] public IReadOnlyList<ProjectUserOption> AvailableUsers { get; set; } = Array.Empty<ProjectUserOption>();
 
     // باید از یک مدل مجزا برای فرم استفاده کرد تا Validation و Bindings ها ایزوله بمانند.
     private ProjectEntity projectModel = new();
+    private string[] selectedEngineerIds = Array.Empty<string>();
 
     private bool IsEditMode => ExistingProject != null && ExistingProject.Id != 0;
 
@@ -177,11 +183,15 @@
         {
             // در حالت ویرایش: کپی عمیق از مدل ورودی برای جلوگیری از تغییر ناخواسته
             projectModel = CloneProject(ExistingProject);
+            selectedEngineerIds = ExistingProject.EngineerAssignments
+                .Select(assignment => assignment.EngineerUserId)
+                .ToArray();
         }
         else
         {
             // در حالت ایجاد: ایجاد یک مدل جدید با مقادیر پیش‌فرض
             projectModel = CreateDefaultProject();
+            selectedEngineerIds = Array.Empty<string>();
         }
     }
 
@@ -198,7 +208,7 @@
             EngineerName = string.Empty,
             DueDate = DateTime.Today.AddMonths(3), // تاریخ پیش‌فرض سه ماه آینده
             Progress = 0,
-            Status = "In Progress" // وضعیت پیش‌فرض برای پروژه جدید
+            Status = "New" // وضعیت پیش‌فرض برای پروژه جدید
         };
     }
 
@@ -215,6 +225,7 @@
             Address = source.Address,
             ProjectManagerName = source.ProjectManagerName,
             EngineerName = source.EngineerName,
+            ProjectManagerUserId = source.ProjectManagerUserId,
             DueDate = source.DueDate,
             Progress = source.Progress,
             Status = source.Status,
@@ -227,7 +238,7 @@
     {
         // می‌توان این لیست را از یک Enum در Portal.Models.Enums.EnumsClass خواند.
         // فعلاً برای سادگی، مقادیر مورد استفاده در UI را برمی‌گردانیم.
-        return new List<string> { "In Progress", "Completed", "On Hold" };
+        return new List<string> { "New", "Pending", "In Progress", "Completed", "Blocked", "Won" };
     }
 
     private async Task Close()
@@ -237,6 +248,13 @@
 
     private async Task HandleSubmit()
     {
+        projectModel.Progress = 0;
+        projectModel.EngineerAssignments = selectedEngineerIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .Select(id => new ProjectEngineerAssignment { ProjectId = projectModel.Id, EngineerUserId = id })
+            .ToList();
+
         // قبل از فراخوانی OnSave، وضعیت نهایی را برای ویرایش‌های دیتابیس تنظیم می‌کنیم.
         // این کار باعث می‌شود پروژه با داده‌های به‌روز شده به کامپوننت Projects.razor برگردد.
         await OnSave.InvokeAsync(projectModel);

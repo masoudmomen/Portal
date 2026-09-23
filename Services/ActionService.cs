@@ -26,6 +26,7 @@ namespace Portal.Services
         Task<bool> ToggleSubtaskAsync(int subtaskId, bool isDone);
         Task<bool> DeleteSubtaskAsync(int subtaskId);
         Task<bool> UpdateSubtaskAsync(int subtaskId, string title, string description);
+        Task<ActionItemModel?> GetActionByProjectId(int projectId);
     }
     public class ActionService : IActionService
     {
@@ -80,7 +81,8 @@ namespace Portal.Services
                 Status = model.Status,
                 Priority = model.Priority,
                 DueDate = model.DueDateText,
-                Progress = CalculateActionProgress(model.Status),
+                //Progress = CalculateActionProgress(model.Status),
+                Progress = 0,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
             };
@@ -107,7 +109,7 @@ namespace Portal.Services
             entity.Status = model.Status;
             entity.Priority = model.Priority;
             entity.DueDate = model.DueDateText;
-            entity.Progress = CalculateActionProgress(model.Status);
+            //entity.Progress = CalculateActionProgress(model.Status);
             entity.UpdatedAt = DateTime.Now;
 
             await context.SaveChangesAsync();
@@ -265,6 +267,7 @@ namespace Portal.Services
             task.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
+            await SynchronizeProgressAndStatusAsync(context, task.Id);
             return true;
         }
 
@@ -351,6 +354,8 @@ namespace Portal.Services
                 await context.SaveChangesAsync();
             }
 
+            await SynchronizeProgressAndStatusAsync(context, subtask.TaskId);
+
             return true;
         }
 
@@ -387,6 +392,8 @@ namespace Portal.Services
                 await context.SaveChangesAsync();
             }
 
+            await SynchronizeProgressAndStatusAsync(context, parentTaskId);
+
             return true;
         }
 
@@ -401,6 +408,96 @@ namespace Portal.Services
             subtask.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<ActionItemModel?> GetActionByProjectId(int projectId)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            //var project = await context.Projects.SingleOrDefaultAsync(c=>c.Id == projectId);
+            //if (project == null) return null;
+
+            var action = await context.Actions.FirstOrDefaultAsync(c=> c.ProjectId == projectId);
+            if(action == null) return null;
+            return MapToActionItemModel(action);
+        }
+
+        private static async Task SynchronizeProgressAndStatusAsync(ApplicationDbContext context, int taskId)
+        {
+            var task = await context.Tasks
+                .Include(t => t.Subtasks)
+                .Include(t => t.Action)
+                .ThenInclude(a => a.Project)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task is null)
+            {
+                return;
+            }
+
+            if (task.Subtasks.Any())
+            {
+                task.Progress = (int)Math.Round(task.Subtasks.Count(subtask => subtask.IsDone) * 100d / task.Subtasks.Count);
+                task.Status = task.Progress switch
+                {
+                    >= 100 => EnumsClass.TaskStatus.Completed,
+                    > 0 => EnumsClass.TaskStatus.InProgress,
+                    _ => EnumsClass.TaskStatus.New
+                };
+            }
+
+            var action = await context.Actions
+                .Include(a => a.Tasks)
+                .FirstOrDefaultAsync(a => a.Id == task.ActionId);
+
+            if (action is null)
+            {
+                return;
+            }
+
+            action.Progress = action.Tasks.Count == 0
+                ? 0
+                : (int)Math.Round(action.Tasks.Average(item => item.Progress));
+            action.Status = action.Progress switch
+            {
+                >= 100 => EnumsClass.ActionStatus.Completed,
+                > 0 => EnumsClass.ActionStatus.InProgress,
+                _ => action.Status
+            };
+
+            if (action.ProjectId is null)
+            {
+                await context.SaveChangesAsync();
+                return;
+            }
+
+            var project = await context.Projects.FirstOrDefaultAsync(p => p.Id == action.ProjectId);
+            if (project is null)
+            {
+                await context.SaveChangesAsync();
+                return;
+            }
+
+            var projectProgresses = await context.Tasks
+                .Where(item => item.Action.ProjectId == project.Id)
+                .Select(item => item.Progress)
+                .ToListAsync();
+
+            project.Progress = projectProgresses.Count == 0
+                ? 0
+                : (int)Math.Round(projectProgresses.Average());
+
+            if (project.Status is not "Won" and not "Blocked")
+            {
+                project.Status = project.Progress switch
+                {
+                    >= 100 => "Completed",
+                    > 0 => "In Progress",
+                    _ => project.Status
+                };
+            }
+
+            project.UpdatedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
         }
 
     }

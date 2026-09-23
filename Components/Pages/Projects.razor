@@ -5,11 +5,13 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Portal.Components.PartialComponents
 @using Portal.Data.Entities
-@using Portal.Services
+@using Portal.Models
 @using Portal.Models.Enums
+@using Portal.Services
 
 @inject IProjectService ProjectService
 @inject IJSRuntime JSRuntime
+@inject IActionService ActionService
 
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
@@ -25,11 +27,11 @@
             </svg>
             Reset
         </button>
-        <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="OpenCreateModal">
+        <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="OpenCreateModal" title="Create New Potential Project">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
             </svg>
-            New Project
+            New PProject
         </button>
     </div>
 </div>
@@ -86,13 +88,10 @@
                             @bind:after="ApplyFilters"
                             disabled="@isLoading">
                         <option value="" selected>All Statuses</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="On Hold">On Hold</option>
-                        @* @foreach (var projectStatus in Enum.GetValues<EnumsClass.ProjectStatus>())
+                        @foreach (var projectStatus in Enum.GetValues<EnumsClass.ProjectStatus>())
                         {
-                            <option value="@projectStatus">@projectStatus</option>
-                        } *@
+                            <option value="@GetProjectStatusValue(projectStatus)">@GetProjectStatusLabel(projectStatus)</option>
+                        }
                     </select>
 
                     <button class="btn btn-light border px-3"
@@ -108,176 +107,269 @@
     </div>
 </div>
 
-<!-- Projects Table -->
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive" style="min-height:300px;">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
-                <tr>
-                    <th class="ps-4">Project Code</th>
-                    <th>Project Details</th>
-                    <th>Manager / Engineer</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Progress</th>
-                    <th class="text-end pe-4">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
+<!-- Projects Workspace -->
+<div class="row g-4 project-workspace">
+    <div class="col-12 col-xl-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4">
+                <div>
+                    <h5 class="fw-bold mb-1">Projects</h5>
+                    <span class="small text-muted">@projects.Count project(s) found</span>
+                </div>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Potential Projects</span>
+            </div>
+            <div class="project-list p-3">
                 @if (isLoading)
                 {
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="spinner-border spinner-border-sm text-primary"
-                                 role="status">
-                                <span class="visually-hidden">Loading projects...</span>
-                            </div>
-                            <span class="text-muted ms-2">Loading projects...</span>
-                        </td>
-                    </tr>
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        Loading projects...
+                    </div>
                 }
                 else if (!string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="text-danger mb-2">@errorMessage</div>
-
-                            <button class="btn btn-sm btn-outline-primary"
-                                    type="button"
-                                    @onclick="LoadProjects">
-                                Try Again
-                            </button>
-                        </td>
-                    </tr>
+                    <div class="text-center py-5">
+                        <div class="text-danger small mb-3">@errorMessage</div>
+                        <button class="btn btn-sm btn-outline-primary" type="button" @onclick="LoadProjects">Try Again</button>
+                    </div>
                 }
                 else if (projects.Count == 0)
                 {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-5">
-                            No projects found.
-                        </td>
-                    </tr>
+                    <div class="text-center text-muted py-5">No projects found.</div>
                 }
                 else
                 {
                     @foreach (var project in projects)
                     {
-                        <tr @key="project.Id">
-                            <td class="ps-4 fw-bold text-primary">
-                                @FormatProjectCode(project.ProjectCode)
-                            </td>
-
-                            <td>
-                                <div class="fw-bold">@project.Name</div>
-                                <div class="small text-muted">
-                                    @GetDisplayValue(project.Address)
+                        <button type="button"
+                                class="project-list-item @(selectedProject?.Id == project.Id ? "selected" : string.Empty)"
+                                @onclick="() => SelectProject(project)">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="text-start min-width-0">
+                                    <div class="small fw-bold text-primary">@FormatProjectCode(project.ProjectCode)</div>
+                                    <div class="fw-bold text-dark text-truncate">@project.Name</div>
+                                    <div class="small text-muted text-truncate">@GetDisplayValue(project.ProjectManagerName)</div>
                                 </div>
-                            </td>
+                                <span class="badge @GetStatusBadgeClass(project.Status)">@GetDisplayValue(project.Status)</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 small text-muted">
+                                <span><i class="bi bi-calendar3 me-1"></i>@project.DueDate.ToString("MMM dd, yyyy")</span>
+                                <span class="fw-semibold">@GetProjectProgress(project)%</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="@GetProgressStyle(GetProjectProgress(project))"></div>
+                            </div>
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
 
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <img src="@GetAvatarUrl(project.Id)"
-                                         class="rounded-circle"
-                                         width="30"
-                                         height="30"
-                                         alt="@GetDisplayValue(project.ProjectManagerName)" />
+    <div class="col-12 col-xl-7">
+        @if (selectedProject is null)
+        {
+            <div class="card border-0 shadow-sm h-100 project-empty-state">
+                <div class="card-body text-center text-muted py-5">
+                    <i class="bi bi-kanban fs-1 text-primary opacity-50"></i>
+                    <h5 class="mt-3">Select a project</h5>
+                    <p class="mb-0">Choose a project from the list to see its details, tasks, and subtasks.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-primary-subtle text-primary">@FormatProjectCode(selectedProject.ProjectCode)</span>
+                                <span class="badge @GetStatusBadgeClass(selectedProject.Status)">@selectedProject.Status</span>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-1">@selectedProject.Name</h4>
+                            <div class="small text-muted">@GetDisplayValue(selectedProject.Address)</div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-start">
+                            <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="() => OpenEditModal(selectedProject)">
+                                <i class="bi bi-pencil-square me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-primary btn-sm" type="button" @onclick="OpenCreateTaskModal" disabled="@(!ProjectActions.Any())">
+                                <i class="bi bi-plus-lg me-1"></i>New Task
+                            </button>
+                        </div>
+                    </div>
 
-                                    <div>
-                                        <div>@GetDisplayValue(project.ProjectManagerName)</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-3"><div class="project-stat"><span>Manager</span><strong>@GetDisplayValue(selectedProject.ProjectManagerName)</strong></div></div>
+                        <div class="col-6 col-md-3"><div class="project-stat"><span>Engineer</span><strong>@GetDisplayValue(selectedProject.EngineerName)</strong></div></div>
+                        <div class="col-6 col-md-3"><div class="project-stat"><span>Tasks</span><strong>@ProjectTasks.Count()</strong></div></div>
+                        <div class="col-6 col-md-3"><div class="project-stat"><span>Completed</span><strong>@ProjectTasks.Count(t => t.Progress == 100)</strong></div></div>
+                    </div>
 
-                                        @if (!string.IsNullOrWhiteSpace(project.EngineerName))
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2"><span class="small fw-semibold">Overall project progress</span><span class="fw-bold">@GetProjectProgress(selectedProject)%</span></div>
+                        <div class="progress rounded-pill" style="height: 10px;"><div class="progress-bar bg-primary" style="@GetProgressStyle(GetProjectProgress(selectedProject))"></div></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-4 mb-3">
+                        <div><h5 class="fw-bold mb-1">Tasks and subtasks</h5><p class="small text-muted mb-0">Work items grouped by project action</p></div>
+                        <span class="badge bg-light text-dark">@ProjectActions.Count() action(s)</span>
+                    </div>
+
+                    @if (!ProjectTasks.Any())
+                    {
+                        <div class="text-center py-4 bg-light rounded-3 text-muted small">No tasks have been added to this project yet.</div>
+                    }
+                    else
+                    {
+                        @foreach (var action in ProjectActions)
+                        {
+                            <div class="action-group mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div><span class="badge @GetStatusBadgeClass(action.Status.ToString())">@action.Status</span><span class="fw-semibold ms-2">@action.Title</span></div>
+                                    <span class="small text-muted">@action.Tasks.Count task(s)</span>
+                                </div>
+                                @foreach (var task in action.Tasks)
+                                {
+                                    <div class="task-row">
+                                        <div class="d-flex justify-content-between align-items-start gap-3">
+                                            <div class="min-width-0">
+                                                <div class="fw-semibold text-dark text-truncate">@task.Title</div>
+                                                <div class="small text-muted">@GetDisplayValue(task.AssignedTo) · @task.Subtasks.Count subtask(s)</div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                <span class="small fw-bold">@ClampProgress(task.Progress)%</span>
+                                                <button class="btn btn-sm btn-outline-primary" type="button" title="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)"><i class="bi bi-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="progress mt-2" style="height: 6px;"><div class="progress-bar @GetTaskProgressBarClass(task.Progress)" style="@GetProgressStyle(task.Progress)"></div></div>
+                                        @if (task.Subtasks.Any())
                                         {
-                                            <div class="small text-muted">
-                                                @project.EngineerName
+                                            <div class="subtask-list mt-3">
+                                                @foreach (var subtask in task.Subtasks)
+                                                {
+                                                    <label class="subtask-row">
+                                                        <input class="form-check-input mt-0" type="checkbox" checked="@subtask.IsDone" @onchange="(args) => ToggleSubtask(subtask, args)" />
+                                                        <span class="@(subtask.IsDone ? "text-decoration-line-through text-muted" : string.Empty)">@subtask.Title</span>
+                                                    </label>
+                                                }
                                             </div>
                                         }
                                     </div>
-                                </div>
-                            </td>
-
-                            <td>@project.DueDate.ToString("MMM dd, yyyy")</td>
-
-                            <td>
-                                <span class="badge @GetStatusBadgeClass(project.Status)">
-                                    @GetDisplayValue(project.Status)
-                                </span>
-                            </td>
-
-                            <td style="width: 150px;">
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar bg-primary"
-                                         style="@GetProgressStyle(project.Progress)">
-                                    </div>
-                                </div>
-
-                                <span class="small text-muted">
-                                    @ClampProgress(project.Progress)%
-                                </span>
-                            </td>
-
-                            <td class="text-end pe-4">
-                                <div class="dropdown position-relative">
-                                    <button class="btn btn-light btn-sm border"
-                                            type="button"
-                                            aria-label="Project actions"
-                                            aria-expanded="@(openActionsProjectId == project.Id)"
-                                            @onclick="() => ToggleProjectActionsDropdown(project.Id)">
-                                        ...
-                                    </button>
-
-                                    @if (openActionsProjectId == project.Id)
-                                    {
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm show"
-                                            style="display: block; position: absolute; right: 0; top: 100%; z-index: 1050;">
-                                            <li>
-                                                <button type="button"
-                                                        class="dropdown-item d-flex align-items-center gap-2"
-                                                        disabled>
-                                                    <i class="bi bi-eye"></i>
-                                                    Details
-                                                </button>
-                                            </li>
-
-                                            <li>
-                                                <button type="button"
-                                                        class="dropdown-item d-flex align-items-center gap-2"
-                                                        @onclick="() => OpenEditModal(project)">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                    Edit
-                                                </button>
-                                            </li>
-
-                                            <li>
-                                                <button type="button"
-                                                        class="dropdown-item text-danger d-flex align-items-center gap-2"
-                                                        @onclick="() => DeleteProject(project)">
-                                                    <i class="bi bi-trash"></i>
-                                                    Delete
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
+                                }
+                            </div>
+                        }
                     }
-                }
-            </tbody>
-        </table>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
 <ProjectFormModal IsVisible="isModalVisible"
                   ExistingProject="selectedProject"
+                  AvailableUsers="availableUsers"
                   OnClose="CloseModal"
                   OnSave="HandleProjectSave" />
 
+@if (isTaskModalVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Task</h5>
+                    <button type="button" class="btn-close" @onclick="CloseTaskModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Action <span class="text-danger">*</span></label>
+                        <select class="form-select" @bind="taskActionId">
+                            @foreach (var action in ProjectActions)
+                            {
+                                <option value="@action.Id">@action.Title</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input class="form-control" @bind="taskForm.Title" placeholder="Task title" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="taskForm.Description"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned to</label>
+                            <input class="form-control" @bind="taskForm.AssignedTo" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Due date</label>
+                            <input class="form-control" type="date" @bind="taskForm.DueDate" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" @onclick="CloseTaskModal">Cancel</button>
+                    <button class="btn btn-primary" type="button" disabled="@isSavingTask" @onclick="SaveTask">
+                        @(isSavingTask ? "Creating..." : "Create Task")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (isSubtaskModalVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Subtask</h5>
+                    <button type="button" class="btn-close" @onclick="CloseSubtaskModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input class="form-control" @bind="subtaskTitle" placeholder="Subtask title" />
+                    </div>
+                    <div>
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="subtaskDescription"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" @onclick="CloseSubtaskModal">Cancel</button>
+                    <button class="btn btn-primary" type="button" disabled="@isSavingSubtask" @onclick="SaveSubtask">
+                        @(isSavingSubtask ? "Creating..." : "Create Subtask")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     private readonly List<ProjectEntity> projects = new();
+    private List<ActionItemModel> actions = new();
+    private List<ProjectUserOption> availableUsers = new();
 
     private ProjectEntity? selectedProject;
     private int? openActionsProjectId;
+    private bool isTaskModalVisible;
+    private bool isSubtaskModalVisible;
+    private bool isSavingTask;
+    private bool isSavingSubtask;
+    private int taskActionId;
+    private TaskItemModel taskForm = new();
+    private TaskItemModel? selectedTask;
+    private string subtaskTitle = string.Empty;
+    private string subtaskDescription = string.Empty;
 
     private string searchTerm = string.Empty;
     private string selectedType = string.Empty;
@@ -291,6 +383,8 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadProjects();
+        await LoadActions();
+        availableUsers = await ProjectService.GetActiveUsersAsync();
     }
 
     private async Task LoadProjects()
@@ -314,17 +408,159 @@
 
             projects.Clear();
             projects.AddRange(loadedProjects);
+
+            if (selectedProject is not null)
+            {
+                selectedProject = projects.FirstOrDefault(p => p.Id == selectedProject.Id);
+            }
+
+            selectedProject ??= projects.FirstOrDefault();
         }
         catch (Exception)
         {
             errorMessage = "An error occurred while loading the projects.";
         }
+
         finally
         {
             isLoading = false;
         }
     }
 
+    private async Task LoadActions()
+    {
+        try
+        {
+            actions = await ActionService.GetAllActionsAsync();
+        }
+        catch (Exception)
+        {
+            errorMessage ??= "An error occurred while loading project tasks.";
+        }
+    }
+
+    private void SelectProject(ProjectEntity project)
+    {
+        selectedProject = project;
+        openActionsProjectId = null;
+    }
+
+    private IEnumerable<ActionItemModel> ProjectActions => selectedProject is null
+        ? Enumerable.Empty<ActionItemModel>()
+        : actions.Where(action => action.ProjectId == selectedProject.Id);
+
+    private IEnumerable<TaskItemModel> ProjectTasks => ProjectActions.SelectMany(action => action.Tasks);
+
+    private int GetProjectProgress(ProjectEntity project)
+    {
+        var tasks = actions
+            .Where(action => action.ProjectId == project.Id)
+            .SelectMany(action => action.Tasks)
+            .ToList();
+
+        return tasks.Count == 0
+            ? ClampProgress(project.Progress)
+            : (int)Math.Round(tasks.Average(task => ClampProgress(task.Progress)));
+    }
+
+    private void OpenCreateTaskModal()
+    {
+        var firstAction = ProjectActions.FirstOrDefault();
+        if (firstAction is null)
+        {
+            return;
+        }
+
+        taskActionId = firstAction.Id;
+        taskForm = new TaskItemModel
+        {
+            Status = EnumsClass.TaskStatus.New,
+            Priority = EnumsClass.ActionPriority.Medium,
+            DueDate = DateTime.Today.AddDays(7)
+        };
+        isTaskModalVisible = true;
+    }
+
+    private void CloseTaskModal()
+    {
+        if (!isSavingTask)
+        {
+            isTaskModalVisible = false;
+        }
+    }
+
+    private async Task SaveTask()
+    {
+        if (isSavingTask || string.IsNullOrWhiteSpace(taskForm.Title))
+        {
+            return;
+        }
+
+        isSavingTask = true;
+        try
+        {
+            var createdTask = await ActionService.CreateTaskAsync(taskActionId, taskForm);
+            if (createdTask is not null)
+            {
+                isTaskModalVisible = false;
+                await LoadActions();
+            }
+        }
+        finally
+        {
+            isSavingTask = false;
+        }
+    }
+
+    private void OpenCreateSubtaskModal(TaskItemModel task)
+    {
+        selectedTask = task;
+        subtaskTitle = string.Empty;
+        subtaskDescription = string.Empty;
+        isSubtaskModalVisible = true;
+    }
+
+    private void CloseSubtaskModal()
+    {
+        if (!isSavingSubtask)
+        {
+            isSubtaskModalVisible = false;
+            selectedTask = null;
+        }
+    }
+
+    private async Task SaveSubtask()
+    {
+        if (isSavingSubtask || selectedTask is null || string.IsNullOrWhiteSpace(subtaskTitle))
+        {
+            return;
+        }
+
+        isSavingSubtask = true;
+        try
+        {
+            var createdSubtask = await ActionService.CreateSubtaskAsync(selectedTask.Id, subtaskTitle.Trim(), subtaskDescription.Trim());
+            if (createdSubtask is not null)
+            {
+                isSubtaskModalVisible = false;
+                selectedTask = null;
+                await LoadActions();
+            }
+        }
+        finally
+        {
+            isSavingSubtask = false;
+        }
+    }
+
+    private async Task ToggleSubtask(SubTaskItemModel subtask, ChangeEventArgs args)
+    {
+        var isDone = args.Value is bool value && value;
+        if (await ActionService.ToggleSubtaskAsync(subtask.Id, isDone))
+        {
+            await LoadActions();
+        }
+    }
     private Task ApplyFilters()
     {
         return LoadProjects();
@@ -464,10 +700,38 @@
     {
         return status switch
         {
+            "New" => "bg-primary-subtle text-primary",
+            "Pending" => "bg-warning-subtle text-warning",
             "Completed" => "bg-soft-success text-success",
             "In Progress" => "bg-soft-success text-success",
-            "On Hold" => "bg-soft-warning text-warning",
+            "Blocked" => "bg-soft-danger text-danger",
+            "Won" => "bg-success text-white",
             _ => "bg-light text-secondary"
+        };
+    }
+
+    private static string GetProjectStatusValue(EnumsClass.ProjectStatus status) => status switch
+    {
+        EnumsClass.ProjectStatus.InProgress => "In Progress",
+        _ => status.ToString()
+    };
+
+    private static string GetProjectStatusLabel(EnumsClass.ProjectStatus status) => status switch
+    {
+        EnumsClass.ProjectStatus.InProgress => "In Progress",
+        _ => status.ToString()
+    };
+
+    private static string GetProjectLifecycleLabel(ProjectEntity? selectedProject)
+    {
+        return selectedProject?.Status switch
+        {
+            "Won" => "Won",
+            "Completed" => "Completed",
+            "Blocked" => "Blocked",
+            "Pending" => "Pending",
+            "In Progress" => "In Progress",
+            _ => "Potential"
         };
     }
 
@@ -479,6 +743,16 @@
     private static string GetProgressStyle(int progress)
     {
         return $"width: {ClampProgress(progress)}%";
+    }
+
+    private static string GetTaskProgressBarClass(int progress)
+    {
+        return progress switch
+        {
+            >= 100 => "bg-success",
+            > 0 => "bg-primary",
+            _ => "bg-secondary"
+        };
     }
 
     private static string FormatProjectCode(string? projectCode)
@@ -512,4 +786,5 @@
         selectedStatus = string.Empty;
         await LoadProjects();
     }
+    
 }

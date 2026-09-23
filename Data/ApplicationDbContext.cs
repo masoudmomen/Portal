@@ -16,6 +16,7 @@ namespace Portal.Data
         public DbSet<ActionEntity> Actions => Set<ActionEntity>();
         public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
         public DbSet<SubTaskEntity> SubTasks => Set<SubTaskEntity>();
+        public DbSet<ProjectEngineerAssignment> ProjectEngineerAssignments => Set<ProjectEngineerAssignment>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -25,6 +26,27 @@ namespace Portal.Data
             builder.Entity<ProjectEntity>(entity =>
             {
                 entity.HasIndex(e => e.ProjectCode).IsUnique(); // جلوگیری از کد تکراری
+
+                entity.HasOne(e => e.ProjectManagerUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProjectManagerUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<ProjectEngineerAssignment>(entity =>
+            {
+                entity.ToTable("ProjectEngineerAssignments");
+                entity.HasKey(e => new { e.ProjectId, e.EngineerUserId });
+
+                entity.HasOne(e => e.Project)
+                    .WithMany(p => p.EngineerAssignments)
+                    .HasForeignKey(e => e.ProjectId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.EngineerUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.EngineerUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
 

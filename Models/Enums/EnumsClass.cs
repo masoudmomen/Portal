@@ -39,9 +39,12 @@ namespace Portal.Models.Enums
 
         public enum ProjectStatus
         {
+            New,
+            Pending,
             InProgress,
             Completed,
-            OnHold,
+            Blocked,
+            Won
         }
     }
 }

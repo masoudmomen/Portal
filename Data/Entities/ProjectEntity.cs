@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Portal.Data;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Portal.Data.Entities
 {
@@ -25,6 +28,10 @@ namespace Portal.Data.Entities
         // فعلاً به صورت String ذخیره می‌کنیم تا فرم شما کار کند
         public string ProjectManagerName { get; set; } = string.Empty;
         public string EngineerName { get; set; } = string.Empty;
+        public string? ProjectManagerUserId { get; set; }
+
+        [ForeignKey(nameof(ProjectManagerUserId))]
+        public ApplicationUser? ProjectManagerUser { get; set; }
 
         public DateTime DueDate { get; set; } = DateTime.Now.AddMonths(3);
         public int Progress { get; set; }
@@ -34,5 +41,6 @@ namespace Portal.Data.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public List<ActionEntity> Actions { get; set; } = new();
+        public List<ProjectEngineerAssignment> EngineerAssignments { get; set; } = new();
     }
 }
