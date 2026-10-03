@@ -45,6 +45,9 @@ namespace Portal.Services
                 .Include(a => a.Project)
                 .Include(a => a.Tasks)
                     .ThenInclude(t => t.Subtasks)
+                .Include(a => a.Tasks)
+                    .ThenInclude(t => t.UserAssignments)
+                        .ThenInclude(assignment => assignment.User)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
 
@@ -59,6 +62,9 @@ namespace Portal.Services
                 .Include(a => a.Project)
                 .Include(a => a.Tasks)
                     .ThenInclude(t => t.Subtasks)
+                .Include(a => a.Tasks)
+                    .ThenInclude(t => t.UserAssignments)
+                        .ThenInclude(assignment => assignment.User)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (action == null)
@@ -161,7 +167,10 @@ namespace Portal.Services
                 ProjectName = projectName ?? string.Empty,
                 Title = entity.Title,
                 Description = entity.Description,
-                AssignedTo = entity.AssignedTo,
+                AssignedTo = entity.UserAssignments?.Any() == true
+                    ? string.Join(", ", entity.UserAssignments.Select(assignment => GetUserDisplayName(assignment.User)))
+                    : entity.AssignedTo,
+                AssignedUserIds = entity.UserAssignments?.Select(assignment => assignment.UserId).ToList() ?? new List<string>(),
                 Status = entity.Status,
                 Priority = entity.Priority,
                 DueDate = entity.DueDate,
@@ -231,21 +240,26 @@ namespace Portal.Services
                 ActionId = actionId,
                 Title = taskModel.Title,
                 Description = taskModel.Description,
-                AssignedTo = string.IsNullOrWhiteSpace(taskModel.AssignedTo) ? action.AssignedTo : taskModel.AssignedTo,
+                AssignedTo = string.Empty,
                 AssignedBy = action.AssignedBy,
                 Status = taskModel.Status,
                 Priority = taskModel.Priority,
-                Progress = taskModel.Progress,
+                Progress = taskModel.Status == EnumsClass.TaskStatus.Completed ? 100 : 0,
                 DueDate = taskModel.DueDate,
                 CreatedAt = DateTime.UtcNow
             };
 
+            taskEntity.UserAssignments = await CreateTaskUserAssignmentsAsync(context, taskModel.AssignedUserIds);
+            taskEntity.AssignedTo = GetAssignmentDisplayText(taskEntity.UserAssignments);
             context.Tasks.Add(taskEntity);
             await context.SaveChangesAsync();
+            await SynchronizeProgressAndStatusAsync(context, taskEntity.Id);
 
             taskModel.Id = taskEntity.Id;
             taskModel.ProjectId = action.ProjectId;
             taskModel.ProjectName = action.Project?.Name ?? string.Empty;
+            taskModel.AssignedTo = GetAssignmentDisplayText(taskEntity.UserAssignments);
+            taskModel.AssignedUserIds = taskEntity.UserAssignments.Select(assignment => assignment.UserId).ToList();
             taskModel.Subtasks = new List<SubTaskItemModel>();
 
             return taskModel;
@@ -254,17 +268,23 @@ namespace Portal.Services
         public async Task<bool> UpdateTaskAsync(TaskItemModel taskModel)
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
-            var task = await context.Tasks.FindAsync(taskModel.Id);
+            var task = await context.Tasks
+                .Include(item => item.Subtasks)
+                .Include(item => item.UserAssignments)
+                .FirstOrDefaultAsync(item => item.Id == taskModel.Id);
             if (task == null) return false;
 
-            task.Title = taskModel.Title;
-            task.Description = taskModel.Description;
-            task.AssignedTo = taskModel.AssignedTo;
+            task.Title = taskModel.Title.Trim();
+            task.Description = taskModel.Description.Trim();
             task.Status = taskModel.Status;
             task.Priority = taskModel.Priority;
-            task.Progress = taskModel.Progress;
             task.DueDate = taskModel.DueDate;
             task.UpdatedAt = DateTime.UtcNow;
+
+            context.TaskUserAssignments.RemoveRange(task.UserAssignments);
+            task.UserAssignments.Clear();
+            task.UserAssignments = await CreateTaskUserAssignmentsAsync(context, taskModel.AssignedUserIds);
+            task.AssignedTo = GetAssignmentDisplayText(task.UserAssignments);
 
             await context.SaveChangesAsync();
             await SynchronizeProgressAndStatusAsync(context, task.Id);
@@ -277,8 +297,10 @@ namespace Portal.Services
             var task = await context.Tasks.FindAsync(taskId);
             if (task == null) return false;
 
+            var actionId = task.ActionId;
             context.Tasks.Remove(task);
             await context.SaveChangesAsync();
+            await SynchronizeActionAndProjectProgressAsync(context, actionId);
             return true;
         }
 
@@ -310,6 +332,7 @@ namespace Portal.Services
 
             context.SubTasks.Add(subtaskEntity);
             await context.SaveChangesAsync();
+            await SynchronizeProgressAndStatusAsync(context, task.Id);
 
             return new SubTaskItemModel
             {
@@ -331,29 +354,6 @@ namespace Portal.Services
             subtask.IsDone = isDone;
             subtask.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
-
-            // به‌روزرسانی خودکار درصد پیشرفت و وضعیت Task والد در دیتابیس
-            var parentTask = await context.Tasks
-                .Include(t => t.Subtasks)
-                .FirstOrDefaultAsync(t => t.Id == subtask.TaskId);
-
-            if (parentTask != null && parentTask.Subtasks.Any())
-            {
-                var total = parentTask.Subtasks.Count;
-                var doneCount = parentTask.Subtasks.Count(s => s.IsDone);
-                var progress = (int)Math.Round((double)doneCount / total * 100);
-
-                parentTask.Progress = progress;
-
-                if (progress == 100)
-                    parentTask.Status = EnumsClass.TaskStatus.Completed;
-                else if (progress > 0 && parentTask.Status == EnumsClass.TaskStatus.New)
-                    parentTask.Status = EnumsClass.TaskStatus.InProgress;
-
-                parentTask.UpdatedAt = DateTime.UtcNow;
-                await context.SaveChangesAsync();
-            }
-
             await SynchronizeProgressAndStatusAsync(context, subtask.TaskId);
 
             return true;
@@ -369,28 +369,6 @@ namespace Portal.Services
             var parentTaskId = subtask.TaskId;
             context.SubTasks.Remove(subtask);
             await context.SaveChangesAsync();
-
-            // محاسبه مجدد درصد پیشرفت Task والد پس از حذف Subtask
-            var parentTask = await context.Tasks
-                .Include(t => t.Subtasks)
-                .FirstOrDefaultAsync(t => t.Id == parentTaskId);
-
-            if (parentTask != null)
-            {
-                if (parentTask.Subtasks.Any())
-                {
-                    var total = parentTask.Subtasks.Count;
-                    var doneCount = parentTask.Subtasks.Count(s => s.IsDone);
-                    parentTask.Progress = (int)Math.Round((double)doneCount / total * 100);
-                }
-                else
-                {
-                    parentTask.Progress = 0;
-                }
-
-                parentTask.UpdatedAt = DateTime.UtcNow;
-                await context.SaveChangesAsync();
-            }
 
             await SynchronizeProgressAndStatusAsync(context, parentTaskId);
 
@@ -425,8 +403,6 @@ namespace Portal.Services
         {
             var task = await context.Tasks
                 .Include(t => t.Subtasks)
-                .Include(t => t.Action)
-                .ThenInclude(a => a.Project)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task is null)
@@ -444,19 +420,32 @@ namespace Portal.Services
                     _ => EnumsClass.TaskStatus.New
                 };
             }
+            else
+            {
+                task.Progress = task.Status == EnumsClass.TaskStatus.Completed ? 100 : 0;
+            }
 
-            var action = await context.Actions
-                .Include(a => a.Tasks)
-                .FirstOrDefaultAsync(a => a.Id == task.ActionId);
+            task.UpdatedAt = DateTime.UtcNow;
+            await SynchronizeActionAndProjectProgressAsync(context, task.ActionId);
+        }
+
+        private static async Task SynchronizeActionAndProjectProgressAsync(ApplicationDbContext context, int actionId)
+        {
+            var action = await context.Actions.FirstOrDefaultAsync(item => item.Id == actionId);
 
             if (action is null)
             {
                 return;
             }
 
-            action.Progress = action.Tasks.Count == 0
+            var actionProgresses = await context.Tasks
+                .Where(task => task.ActionId == actionId)
+                .Select(task => task.Progress)
+                .ToListAsync();
+
+            action.Progress = actionProgresses.Count == 0
                 ? 0
-                : (int)Math.Round(action.Tasks.Average(item => item.Progress));
+                : (int)Math.Round(actionProgresses.Average());
             action.Status = action.Progress switch
             {
                 >= 100 => EnumsClass.ActionStatus.Completed,
@@ -498,6 +487,37 @@ namespace Portal.Services
 
             project.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
+        }
+
+        private static async Task<List<TaskUserAssignment>> CreateTaskUserAssignmentsAsync(
+            ApplicationDbContext context,
+            IEnumerable<string> userIds)
+        {
+            var selectedIds = userIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+
+            var users = await context.Users
+                .Where(user => user.IsActive && selectedIds.Contains(user.Id))
+                .ToListAsync();
+
+            return users
+                .Select(user => new TaskUserAssignment { UserId = user.Id, User = user })
+                .ToList();
+        }
+
+        private static string GetAssignmentDisplayText(IEnumerable<TaskUserAssignment> assignments)
+        {
+            var displayText = string.Join(", ", assignments.Select(assignment => GetUserDisplayName(assignment.User)));
+            return displayText.Length <= 150 ? displayText : displayText[..150];
+        }
+
+        private static string GetUserDisplayName(ApplicationUser user)
+        {
+            return string.IsNullOrWhiteSpace(user.FullName)
+                ? user.UserName ?? user.Email ?? user.Id
+                : user.FullName;
         }
 
     }

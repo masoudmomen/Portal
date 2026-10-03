@@ -31,5 +31,6 @@ namespace Portal.Data.Entities
         public DateTime? UpdatedAt { get; set; }
 
         public List<SubTaskEntity> Subtasks { get; set; } = new();
+        public List<TaskUserAssignment> UserAssignments { get; set; } = new();
     }
 }

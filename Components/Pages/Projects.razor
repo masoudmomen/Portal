@@ -194,7 +194,7 @@
                             <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="() => OpenEditModal(selectedProject)">
                                 <i class="bi bi-pencil-square me-1"></i>Edit
                             </button>
-                            <button class="btn btn-primary btn-sm" type="button" @onclick="OpenCreateTaskModal" disabled="@(!ProjectActions.Any())">
+                            <button class="btn btn-primary btn-sm" type="button" @onclick="OpenCreateTaskModal">
                                 <i class="bi bi-plus-lg me-1"></i>New Task
                             </button>
                         </div>
@@ -240,7 +240,15 @@
                                             </div>
                                             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                                                 <span class="small fw-bold">@ClampProgress(task.Progress)%</span>
-                                                <button class="btn btn-sm btn-outline-primary" type="button" title="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)"><i class="bi bi-plus"></i></button>
+                                                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" type="button" title="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)">
+                                                    <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Add subtask</span>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit task" @onclick="() => OpenEditTaskModal(task)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" type="button" title="Delete task" @onclick="() => DeleteTask(task)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="progress mt-2" style="height: 6px;"><div class="progress-bar @GetTaskProgressBarClass(task.Progress)" style="@GetProgressStyle(task.Progress)"></div></div>
@@ -249,10 +257,13 @@
                                             <div class="subtask-list mt-3">
                                                 @foreach (var subtask in task.Subtasks)
                                                 {
-                                                    <label class="subtask-row">
+                                                    <div class="subtask-row">
                                                         <input class="form-check-input mt-0" type="checkbox" checked="@subtask.IsDone" @onchange="(args) => ToggleSubtask(subtask, args)" />
                                                         <span class="@(subtask.IsDone ? "text-decoration-line-through text-muted" : string.Empty)">@subtask.Title</span>
-                                                    </label>
+                                                        <button class="btn btn-sm btn-outline-danger ms-auto" type="button" title="Delete subtask" @onclick="() => DeleteSubtask(subtask)">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 }
                                             </div>
                                         }
@@ -279,19 +290,10 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header">
-                    <h5 class="modal-title">Create New Task</h5>
+                    <h5 class="modal-title">@(editingTaskId.HasValue ? "Edit Task" : "Create New Task")</h5>
                     <button type="button" class="btn-close" @onclick="CloseTaskModal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Action <span class="text-danger">*</span></label>
-                        <select class="form-select" @bind="taskActionId">
-                            @foreach (var action in ProjectActions)
-                            {
-                                <option value="@action.Id">@action.Title</option>
-                            }
-                        </select>
-                    </div>
                     <div class="mb-3">
                         <label class="form-label">Title <span class="text-danger">*</span></label>
                         <input class="form-control" @bind="taskForm.Title" placeholder="Task title" />
@@ -300,12 +302,36 @@
                         <label class="form-label">Description</label>
                         <textarea class="form-control" rows="3" @bind="taskForm.Description"></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assign to users</label>
+                        <select class="form-select" multiple size="5" @bind="selectedTaskAssigneeIds">
+                            @foreach (var user in availableUsers)
+                            {
+                                <option value="@user.Id">@user.DisplayName</option>
+                            }
+                        </select>
+                        <div class="form-text">Select one or more Identity users.</div>
+                    </div>
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Assigned to</label>
-                            <input class="form-control" @bind="taskForm.AssignedTo" />
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="taskForm.Status">
+                                @foreach (var status in Enum.GetValues<EnumsClass.TaskStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" @bind="taskForm.Priority">
+                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                                {
+                                    <option value="@priority">@priority</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Due date</label>
                             <input class="form-control" type="date" @bind="taskForm.DueDate" />
                         </div>
@@ -314,7 +340,7 @@
                 <div class="modal-footer">
                     <button class="btn btn-outline-secondary" type="button" @onclick="CloseTaskModal">Cancel</button>
                     <button class="btn btn-primary" type="button" disabled="@isSavingTask" @onclick="SaveTask">
-                        @(isSavingTask ? "Creating..." : "Create Task")
+                        @(isSavingTask ? "Saving..." : editingTaskId.HasValue ? "Save Changes" : "Create Task")
                     </button>
                 </div>
             </div>
@@ -366,6 +392,8 @@
     private bool isSavingTask;
     private bool isSavingSubtask;
     private int taskActionId;
+    private int? editingTaskId;
+    private string[] selectedTaskAssigneeIds = Array.Empty<string>();
     private TaskItemModel taskForm = new();
     private TaskItemModel? selectedTask;
     private string subtaskTitle = string.Empty;
@@ -463,11 +491,14 @@
             : (int)Math.Round(tasks.Average(task => ClampProgress(task.Progress)));
     }
 
-    private void OpenCreateTaskModal()
+    private async Task OpenCreateTaskModal()
     {
         var firstAction = ProjectActions.FirstOrDefault();
         if (firstAction is null)
         {
+            // اگر action نیست، کاربر باید ابتدا ایک action/section ایجاد کند
+            errorMessage = "Please create a project section/action first before adding tasks.";
+            await JSRuntime.InvokeVoidAsync("alert", "No project section found. Please create a section/action first.");
             return;
         }
 
@@ -478,6 +509,34 @@
             Priority = EnumsClass.ActionPriority.Medium,
             DueDate = DateTime.Today.AddDays(7)
         };
+        editingTaskId = null;
+        selectedTaskAssigneeIds = Array.Empty<string>();
+        isTaskModalVisible = true;
+    }
+
+    private void OpenEditTaskModal(TaskItemModel task)
+    {
+        var parentAction = ProjectActions.FirstOrDefault(action => action.Tasks.Any(item => item.Id == task.Id));
+        if (parentAction is null)
+        {
+            return;
+        }
+
+        taskActionId = parentAction.Id;
+        editingTaskId = task.Id;
+        taskForm = new TaskItemModel
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            AssignedTo = task.AssignedTo,
+            AssignedUserIds = task.AssignedUserIds.ToList(),
+            Status = task.Status,
+            Priority = task.Priority,
+            DueDate = task.DueDate,
+            Progress = task.Progress
+        };
+        selectedTaskAssigneeIds = task.AssignedUserIds.ToArray();
         isTaskModalVisible = true;
     }
 
@@ -486,6 +545,7 @@
         if (!isSavingTask)
         {
             isTaskModalVisible = false;
+            editingTaskId = null;
         }
     }
 
@@ -499,16 +559,35 @@
         isSavingTask = true;
         try
         {
-            var createdTask = await ActionService.CreateTaskAsync(taskActionId, taskForm);
-            if (createdTask is not null)
+            taskForm.AssignedUserIds = selectedTaskAssigneeIds.ToList();
+            var succeeded = editingTaskId.HasValue
+                ? await ActionService.UpdateTaskAsync(taskForm)
+                : await ActionService.CreateTaskAsync(taskActionId, taskForm) is not null;
+
+            if (succeeded)
             {
                 isTaskModalVisible = false;
+                editingTaskId = null;
                 await LoadActions();
             }
         }
         finally
         {
             isSavingTask = false;
+        }
+    }
+
+    private async Task DeleteTask(TaskItemModel task)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Delete task '{task.Title}' and all its subtasks?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        if (await ActionService.DeleteTaskAsync(task.Id))
+        {
+            await LoadActions();
         }
     }
 
@@ -557,6 +636,20 @@
     {
         var isDone = args.Value is bool value && value;
         if (await ActionService.ToggleSubtaskAsync(subtask.Id, isDone))
+        {
+            await LoadActions();
+        }
+    }
+
+    private async Task DeleteSubtask(SubTaskItemModel subtask)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Delete subtask '{subtask.Title}'?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        if (await ActionService.DeleteSubtaskAsync(subtask.Id))
         {
             await LoadActions();
         }

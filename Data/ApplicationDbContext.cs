@@ -17,6 +17,7 @@ namespace Portal.Data
         public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
         public DbSet<SubTaskEntity> SubTasks => Set<SubTaskEntity>();
         public DbSet<ProjectEngineerAssignment> ProjectEngineerAssignments => Set<ProjectEngineerAssignment>();
+        public DbSet<TaskUserAssignment> TaskUserAssignments => Set<TaskUserAssignment>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -146,6 +147,22 @@ namespace Portal.Data
                     .WithMany(x => x.Subtasks)
                     .HasForeignKey(x => x.TaskId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<TaskUserAssignment>(entity =>
+            {
+                entity.ToTable("TaskUserAssignments");
+                entity.HasKey(assignment => new { assignment.TaskId, assignment.UserId });
+
+                entity.HasOne(assignment => assignment.Task)
+                    .WithMany(task => task.UserAssignments)
+                    .HasForeignKey(assignment => assignment.TaskId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(assignment => assignment.User)
+                    .WithMany()
+                    .HasForeignKey(assignment => assignment.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

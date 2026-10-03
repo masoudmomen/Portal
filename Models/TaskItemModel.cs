@@ -10,6 +10,7 @@ namespace Portal.Models
         public string ProjectName { get; set; } = string.Empty;
         public int? ProjectId { get; set; }
         public string AssignedTo { get; set; } = string.Empty;
+        public List<string> AssignedUserIds { get; set; } = new();
         public EnumsClass.TaskStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
         public int Progress { get; set; }

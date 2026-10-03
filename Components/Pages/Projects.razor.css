@@ -171,6 +171,34 @@
     min-width: 0;
 }
 
+/* Action buttons styling */
+.btn-sm [class^="bi"] {
+    font-size: 0.9rem;
+}
+
+.btn-sm.btn-outline-danger,
+.btn-sm.btn-outline-secondary {
+    padding: 0.25rem 0.5rem;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-sm.btn-outline-danger:hover,
+.btn-sm.btn-outline-secondary:hover {
+    transform: scale(1.05);
+    transition: all 0.15s ease;
+}
+
+/* Responsive button text */
+@media (max-width: 576px) {
+    .btn-sm .d-none {
+        display: none !important;
+    }
+}
+
 @media (max-width: 1199.98px) {
     .project-list {
         max-height: 420px;
