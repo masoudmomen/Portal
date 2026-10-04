@@ -240,14 +240,14 @@
                                             </div>
                                             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                                                 <span class="small fw-bold">@ClampProgress(task.Progress)%</span>
-                                                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" type="button" title="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)">
-                                                    <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline">Add subtask</span>
+                                                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" type="button" title="Add subtask" aria-label="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)">
+                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
                                                 </button>
-                                                <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit task" @onclick="() => OpenEditTaskModal(task)">
-                                                    <i class="bi bi-pencil"></i>
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit task" aria-label="Edit task" @onclick="() => OpenEditTaskModal(task)">
+                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.8 2.7 2.5 2.5M2.5 13.5l2.9-.7 7.7-7.7a1.4 1.4 0 0 0-2-2l-7.7 7.7-.9 2.7Z" /></svg>
                                                 </button>
-                                                <button class="btn btn-sm btn-outline-danger" type="button" title="Delete task" @onclick="() => DeleteTask(task)">
-                                                    <i class="bi bi-trash"></i>
+                                                <button class="btn btn-sm btn-outline-danger" type="button" title="Delete task" aria-label="Delete task" @onclick="() => DeleteTask(task)">
+                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9M6.5 6.5v5M9.5 6.5v5" /></svg>
                                                 </button>
                                             </div>
                                         </div>
@@ -260,8 +260,8 @@
                                                     <div class="subtask-row">
                                                         <input class="form-check-input mt-0" type="checkbox" checked="@subtask.IsDone" @onchange="(args) => ToggleSubtask(subtask, args)" />
                                                         <span class="@(subtask.IsDone ? "text-decoration-line-through text-muted" : string.Empty)">@subtask.Title</span>
-                                                        <button class="btn btn-sm btn-outline-danger ms-auto" type="button" title="Delete subtask" @onclick="() => DeleteSubtask(subtask)">
-                                                            <i class="bi bi-trash"></i>
+                                                        <button class="btn btn-sm btn-outline-danger ms-auto" type="button" title="Delete subtask" aria-label="Delete subtask" @onclick="() => DeleteSubtask(subtask)">
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9M6.5 6.5v5M9.5 6.5v5" /></svg>
                                                         </button>
                                                     </div>
                                                 }
@@ -493,16 +493,7 @@
 
     private async Task OpenCreateTaskModal()
     {
-        var firstAction = ProjectActions.FirstOrDefault();
-        if (firstAction is null)
-        {
-            // اگر action نیست، کاربر باید ابتدا ایک action/section ایجاد کند
-            errorMessage = "Please create a project section/action first before adding tasks.";
-            await JSRuntime.InvokeVoidAsync("alert", "No project section found. Please create a section/action first.");
-            return;
-        }
-
-        taskActionId = firstAction.Id;
+        taskActionId = ProjectActions.FirstOrDefault()?.Id ?? 0;
         taskForm = new TaskItemModel
         {
             Status = EnumsClass.TaskStatus.New,
@@ -560,9 +551,24 @@
         try
         {
             taskForm.AssignedUserIds = selectedTaskAssigneeIds.ToList();
+            if (!editingTaskId.HasValue && taskActionId == 0 && selectedProject is not null)
+            {
+                taskActionId = await ActionService.CreateActionAsync(new ActionFormModel
+                {
+                    ProjectId = selectedProject.Id,
+                    ProjectName = selectedProject.Name,
+                    Title = "General Tasks",
+                    AssignedTo = "Unassigned",
+                    AssignedBy = "System",
+                    Status = EnumsClass.ActionStatus.New,
+                    Priority = EnumsClass.ActionPriority.Medium,
+                    DueDateText = selectedProject.DueDate
+                });
+            }
+
             var succeeded = editingTaskId.HasValue
                 ? await ActionService.UpdateTaskAsync(taskForm)
-                : await ActionService.CreateTaskAsync(taskActionId, taskForm) is not null;
+                : taskActionId > 0 && await ActionService.CreateTaskAsync(taskActionId, taskForm) is not null;
 
             if (succeeded)
             {
