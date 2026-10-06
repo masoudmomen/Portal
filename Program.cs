@@ -46,6 +46,7 @@ builder.Services.AddAuthorization();
 #endregion
 
 #region IOC
+builder.Services.AddAutoMapper(typeof(CustomMappingProfile));
 builder.Services.AddTransient<IProjectService, ProjectService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IActionService, ActionService>();

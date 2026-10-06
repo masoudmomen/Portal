@@ -13,6 +13,7 @@
 @inject IJSRuntime JSRuntime
 @inject IActionService ActionService
 
+
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
         <h2 class="fw-bold text-dark">Project Management</h2>
@@ -150,7 +151,7 @@
                                     <div class="fw-bold text-dark text-truncate">@project.Name</div>
                                     <div class="small text-muted text-truncate">@GetDisplayValue(project.ProjectManagerName)</div>
                                 </div>
-                                <span class="badge @GetStatusBadgeClass(project.Status)">@GetDisplayValue(project.Status)</span>
+                                <span class="badge @GetStatusBadgeClass(project.Status)">@GetDisplayValue(project.Status.ToString())</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-3 small text-muted">
                                 <span><i class="bi bi-calendar3 me-1"></i>@project.DueDate.ToString("MMM dd, yyyy")</span>
@@ -202,7 +203,13 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-6 col-md-3"><div class="project-stat"><span>Manager</span><strong>@GetDisplayValue(selectedProject.ProjectManagerName)</strong></div></div>
-                        <div class="col-6 col-md-3"><div class="project-stat"><span>Engineer</span><strong>@GetDisplayValue(selectedProject.EngineerName)</strong></div></div>
+                        <div class="col-6 col-md-3"><div class="project-stat"><span>Engineers</span>
+                            <strong>
+                                    @foreach (var item in selectedProject.EngineerAssignments)
+                                    {
+                                        @GetDisplayValue(item.EngineerUser.FullName)
+                                    }
+                            </strong></div></div>
                         <div class="col-6 col-md-3"><div class="project-stat"><span>Tasks</span><strong>@ProjectTasks.Count()</strong></div></div>
                         <div class="col-6 col-md-3"><div class="project-stat"><span>Completed</span><strong>@ProjectTasks.Count(t => t.Progress == 100)</strong></div></div>
                     </div>
@@ -223,48 +230,39 @@
                     }
                     else
                     {
-                        @foreach (var action in ProjectActions)
+                        @foreach (var task in action.Tasks)
                         {
-                            <div class="action-group mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div><span class="badge @GetStatusBadgeClass(action.Status.ToString())">@action.Status</span><span class="fw-semibold ms-2">@action.Title</span></div>
-                                    <span class="small text-muted">@action.Tasks.Count task(s)</span>
+                            <div class="task-row">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div class="min-width-0">
+                                        <div class="fw-semibold text-dark text-truncate">@task.Title</div>
+                                        <div class="small text-muted">@GetDisplayValue(task.AssignedTo) · @task.Subtasks.Count subtask(s)</div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                        <span class="small fw-bold">@ClampProgress(task.Progress)%</span>
+                                        <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" type="button" title="Add subtask" aria-label="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit task" aria-label="Edit task" @onclick="() => OpenEditTaskModal(task)">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.8 2.7 2.5 2.5M2.5 13.5l2.9-.7 7.7-7.7a1.4 1.4 0 0 0-2-2l-7.7 7.7-.9 2.7Z" /></svg>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" type="button" title="Delete task" aria-label="Delete task" @onclick="() => DeleteTask(task)">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9M6.5 6.5v5M9.5 6.5v5" /></svg>
+                                        </button>
+                                    </div>
                                 </div>
-                                @foreach (var task in action.Tasks)
+                                <div class="progress mt-2" style="height: 6px;"><div class="progress-bar @GetTaskProgressBarClass(task.Progress)" style="@GetProgressStyle(task.Progress)"></div></div>
+                                @if (task.Subtasks.Any())
                                 {
-                                    <div class="task-row">
-                                        <div class="d-flex justify-content-between align-items-start gap-3">
-                                            <div class="min-width-0">
-                                                <div class="fw-semibold text-dark text-truncate">@task.Title</div>
-                                                <div class="small text-muted">@GetDisplayValue(task.AssignedTo) · @task.Subtasks.Count subtask(s)</div>
-                                            </div>
-                                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                                                <span class="small fw-bold">@ClampProgress(task.Progress)%</span>
-                                                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" type="button" title="Add subtask" aria-label="Add subtask" @onclick="() => OpenCreateSubtaskModal(task)">
-                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit task" aria-label="Edit task" @onclick="() => OpenEditTaskModal(task)">
-                                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.8 2.7 2.5 2.5M2.5 13.5l2.9-.7 7.7-7.7a1.4 1.4 0 0 0-2-2l-7.7 7.7-.9 2.7Z" /></svg>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger" type="button" title="Delete task" aria-label="Delete task" @onclick="() => DeleteTask(task)">
+                                    <div class="subtask-list mt-3">
+                                        @foreach (var subtask in task.Subtasks)
+                                        {
+                                            <div class="subtask-row">
+                                                <input class="form-check-input mt-0" type="checkbox" checked="@subtask.IsDone" @onchange="(args) => ToggleSubtask(subtask, args)" />
+                                                <span class="@(subtask.IsDone ? "text-decoration-line-through text-muted" : string.Empty)">@subtask.Title</span>
+                                                <button class="btn btn-sm btn-outline-danger ms-auto" type="button" title="Delete subtask" aria-label="Delete subtask" @onclick="() => DeleteSubtask(subtask)">
                                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9M6.5 6.5v5M9.5 6.5v5" /></svg>
                                                 </button>
-                                            </div>
-                                        </div>
-                                        <div class="progress mt-2" style="height: 6px;"><div class="progress-bar @GetTaskProgressBarClass(task.Progress)" style="@GetProgressStyle(task.Progress)"></div></div>
-                                        @if (task.Subtasks.Any())
-                                        {
-                                            <div class="subtask-list mt-3">
-                                                @foreach (var subtask in task.Subtasks)
-                                                {
-                                                    <div class="subtask-row">
-                                                        <input class="form-check-input mt-0" type="checkbox" checked="@subtask.IsDone" @onchange="(args) => ToggleSubtask(subtask, args)" />
-                                                        <span class="@(subtask.IsDone ? "text-decoration-line-through text-muted" : string.Empty)">@subtask.Title</span>
-                                                        <button class="btn btn-sm btn-outline-danger ms-auto" type="button" title="Delete subtask" aria-label="Delete subtask" @onclick="() => DeleteSubtask(subtask)">
-                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9M6.5 6.5v5M9.5 6.5v5" /></svg>
-                                                        </button>
-                                                    </div>
-                                                }
                                             </div>
                                         }
                                     </div>
@@ -325,7 +323,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Priority</label>
                             <select class="form-select" @bind="taskForm.Priority">
-                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                                @foreach (var priority in Enum.GetValues<EnumsClass.TaskPriority>())
                                 {
                                     <option value="@priority">@priority</option>
                                 }
@@ -382,7 +380,6 @@
 
 @code {
     private readonly List<ProjectEntity> projects = new();
-    private List<ActionItemModel> actions = new();
     private List<ProjectUserOption> availableUsers = new();
 
     private ProjectEntity? selectedProject;
@@ -411,7 +408,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadProjects();
-        await LoadActions();
         availableUsers = await ProjectService.GetActiveUsersAsync();
     }
 
@@ -455,17 +451,7 @@
         }
     }
 
-    private async Task LoadActions()
-    {
-        try
-        {
-            actions = await ActionService.GetAllActionsAsync();
-        }
-        catch (Exception)
-        {
-            errorMessage ??= "An error occurred while loading project tasks.";
-        }
-    }
+
 
     private void SelectProject(ProjectEntity project)
     {
@@ -473,11 +459,9 @@
         openActionsProjectId = null;
     }
 
-    private IEnumerable<ActionItemModel> ProjectActions => selectedProject is null
-        ? Enumerable.Empty<ActionItemModel>()
-        : actions.Where(action => action.ProjectId == selectedProject.Id);
 
-    private IEnumerable<TaskItemModel> ProjectTasks => ProjectActions.SelectMany(action => action.Tasks);
+
+    private IEnumerable<TaskItemModel> ProjectTasks => projects.SelectMany(c => c.Tasks);
 
     private int GetProjectProgress(ProjectEntity project)
     {
@@ -497,7 +481,7 @@
         taskForm = new TaskItemModel
         {
             Status = EnumsClass.TaskStatus.New,
-            Priority = EnumsClass.ActionPriority.Medium,
+            Priority = EnumsClass.TaskPriority.Medium,
             DueDate = DateTime.Today.AddDays(7)
         };
         editingTaskId = null;
@@ -561,7 +545,7 @@
                     AssignedTo = "Unassigned",
                     AssignedBy = "System",
                     Status = EnumsClass.ActionStatus.New,
-                    Priority = EnumsClass.ActionPriority.Medium,
+                    Priority = EnumsClass.TaskPriority.Medium,
                     DueDateText = selectedProject.DueDate
                 });
             }
@@ -795,16 +779,14 @@
         }
     }
 
-    private static string GetStatusBadgeClass(string? status)
+    private static string GetStatusBadgeClass(EnumsClass.ProjectStatus? status)
     {
         return status switch
         {
-            "New" => "bg-primary-subtle text-primary",
-            "Pending" => "bg-warning-subtle text-warning",
-            "Completed" => "bg-soft-success text-success",
-            "In Progress" => "bg-soft-success text-success",
-            "Blocked" => "bg-soft-danger text-danger",
-            "Won" => "bg-success text-white",
+            EnumsClass.ProjectStatus.New => "bg-primary-subtle text-primary",
+            EnumsClass.ProjectStatus.Completed => "bg-soft-success text-success",
+            EnumsClass.ProjectStatus.InProgress => "bg-soft-success text-success",
+            EnumsClass.ProjectStatus.Won => "bg-success text-white",
             _ => "bg-light text-secondary"
         };
     }
@@ -825,12 +807,11 @@
     {
         return selectedProject?.Status switch
         {
-            "Won" => "Won",
-            "Completed" => "Completed",
-            "Blocked" => "Blocked",
-            "Pending" => "Pending",
-            "In Progress" => "In Progress",
-            _ => "Potential"
+            EnumsClass.ProjectStatus.Won => "Won",
+            EnumsClass.ProjectStatus.Completed => "Completed",
+            EnumsClass.ProjectStatus.InProgress => "In Progress",
+            EnumsClass.ProjectStatus.New => "New",
+            _ => "New"
         };
     }
 

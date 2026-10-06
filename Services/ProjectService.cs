@@ -29,6 +29,7 @@ namespace Portal.Services
             using var context = await _contextFactory.CreateDbContextAsync();
             var query = context.Projects
                 .Include(p => p.ProjectManagerUser)
+                .Include(p=>p.Tasks)
                 .Include(p => p.EngineerAssignments)
                 .ThenInclude(a => a.EngineerUser)
                 .AsQueryable();
