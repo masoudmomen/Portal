@@ -8,9 +8,9 @@ namespace Portal.Data.Entities
     {
         public int Id { get; set; }
         [Required]
-        public int ActionId { get; set; }
-        [ForeignKey(nameof(ActionId))]
-        public ActionEntity Action { get; set; } = null!;
+        public string? ProjectId { get; set; }
+        [ForeignKey(nameof(ProjectId))]
+        public ProjectEntity Project { get; set; } = null!;
         [Required]
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
@@ -18,12 +18,13 @@ namespace Portal.Data.Entities
         public string Description { get; set; } = string.Empty;
         [Required]
         [MaxLength(150)]
-        public string AssignedTo { get; set; } = string.Empty;
-        [Required]
-        [MaxLength(150)]
-        public string AssignedBy { get; set; } = string.Empty;
+        public string AssignedById { get; set; }
+
+        [ForeignKey("AssignedById")]
+        public virtual ApplicationUser AssignedBy { get; set; }
+
         public EnumsClass.TaskStatus Status { get; set; } = EnumsClass.TaskStatus.New;
-        public EnumsClass.ActionPriority Priority { get; set; } = EnumsClass.ActionPriority.Medium;
+        public EnumsClass.TaskPriority Priority { get; set; } = EnumsClass.TaskPriority.Medium;
         public DateTime? DueDate { get; set; }
         [Range(0, 100)]
         public int Progress { get; set; }

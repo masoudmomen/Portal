@@ -18,11 +18,10 @@ namespace Portal.Models.Enums
         {
             New,
             InProgress,
-            Blocked,
             Completed
         }
 
-        public enum ActionPriority
+        public enum TaskPriority
         {
             Low,
             Medium,
@@ -40,10 +39,8 @@ namespace Portal.Models.Enums
         public enum ProjectStatus
         {
             New,
-            Pending,
             InProgress,
             Completed,
-            Blocked,
             Won
         }
     }

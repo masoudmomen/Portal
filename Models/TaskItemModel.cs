@@ -14,7 +14,7 @@ namespace Portal.Models
         public EnumsClass.TaskStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
         public int Progress { get; set; }
-        public EnumsClass.ActionPriority Priority { get; set; }
+        public EnumsClass.TaskPriority Priority { get; set; }
         public List<SubTaskItemModel> Subtasks { get; set; } = new();
     }
 }

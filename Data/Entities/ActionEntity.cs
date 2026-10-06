@@ -20,7 +20,7 @@ namespace Portal.Data.Entities
         [MaxLength(150)]
         public string AssignedBy { get; set; } = string.Empty;
         public EnumsClass.ActionStatus Status { get; set; } = EnumsClass.ActionStatus.New;
-        public EnumsClass.ActionPriority Priority { get; set; } = EnumsClass.ActionPriority.Medium;
+        public EnumsClass.TaskPriority Priority { get; set; } = EnumsClass.TaskPriority.Medium;
         public DateTime? DueDate { get; set; }
         [Range(0, 100)]
         public int Progress { get; set; }

@@ -114,7 +114,7 @@
                 <div class="col-6 col-md-2">
                     <select class="form-select bg-light" @bind="selectedPriority">
                         <option value="">All Priorities</option>
-                        @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                    @foreach (var priority in Enum.GetValues<EnumsClass.TaskPriority>())
                         {
                             <option value="@priority">@priority</option>
                         }
@@ -424,7 +424,7 @@
                         <div class="col-6">
                             <label class="form-label small fw-semibold">Priority</label>
                             <select class="form-select" @bind="actionForm.Priority">
-                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                                @foreach (var priority in Enum.GetValues<EnumsClass.TaskPriority>())
                                 {
                                     <option value="@priority">@priority</option>
                                 }
@@ -485,7 +485,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Priority</label>
                             <select class="form-select" @bind="taskForm.Priority">
-                                @foreach (var priority in Enum.GetValues<EnumsClass.ActionPriority>())
+                                @foreach (var priority in Enum.GetValues<EnumsClass.TaskPriority>())
                                 {
                                     <option value="@priority">@priority</option>
                                 }
@@ -655,7 +655,7 @@
         actionForm = new ActionFormModel
         {
             Status = EnumsClass.ActionStatus.New,
-            Priority = EnumsClass.ActionPriority.Medium,
+            Priority = EnumsClass.TaskPriority.Medium,
             AssignedBy = currentUserName,
             DueDateText = DateTime.Today.AddDays(7)
         };
@@ -829,17 +829,16 @@
     {
         EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary",
         EnumsClass.TaskStatus.InProgress => "bg-primary-subtle text-primary",
-        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger",
         EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success",
         _ => "bg-light text-dark"
     };
 
-    private string GetPriorityBadgeClass(EnumsClass.ActionPriority priority) => priority switch
+    private string GetPriorityBadgeClass(EnumsClass.TaskPriority priority) => priority switch
     {
-        EnumsClass.ActionPriority.Low => "bg-light text-muted border",
-        EnumsClass.ActionPriority.Medium => "bg-info-subtle text-info",
-        EnumsClass.ActionPriority.High => "bg-warning-subtle text-warning",
-        EnumsClass.ActionPriority.Critical => "bg-danger text-white",
+        EnumsClass.TaskPriority.Low => "bg-light text-muted border",
+        EnumsClass.TaskPriority.Medium => "bg-info-subtle text-info",
+        EnumsClass.TaskPriority.High => "bg-warning-subtle text-warning",
+        EnumsClass.TaskPriority.Critical => "bg-danger text-white",
         _ => "bg-light text-muted"
     };
 
@@ -927,7 +926,7 @@
         public string Description { get; set; } = string.Empty;
         public string AssignedTo { get; set; } = string.Empty;
         public EnumsClass.TaskStatus Status { get; set; } = EnumsClass.TaskStatus.New;
-        public EnumsClass.ActionPriority Priority { get; set; } = EnumsClass.ActionPriority.Medium;
+        public EnumsClass.TaskPriority Priority { get; set; } = EnumsClass.TaskPriority.Medium;
         public DateTime? DueDate { get; set; }
         public int Progress { get; set; }
     }

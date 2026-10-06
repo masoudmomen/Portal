@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Portal.Data;
-using System.ComponentModel.DataAnnotations.Schema;
+using Portal.Models.Enums;
 
 namespace Portal.Data.Entities
 {
@@ -25,22 +25,20 @@ namespace Portal.Data.Entities
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
 
-        // فعلاً به صورت String ذخیره می‌کنیم تا فرم شما کار کند
         public string ProjectManagerName { get; set; } = string.Empty;
-        public string EngineerName { get; set; } = string.Empty;
         public string? ProjectManagerUserId { get; set; }
-
         [ForeignKey(nameof(ProjectManagerUserId))]
         public ApplicationUser? ProjectManagerUser { get; set; }
 
         public DateTime DueDate { get; set; } = DateTime.Now.AddMonths(3);
         public int Progress { get; set; }
-
-        public string Status { get; set; } = "In Progress";
+        public EnumsClass.ProjectStatus Status { get; set; } = EnumsClass.ProjectStatus.New;
+        public bool IsWon { get; set;  } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
-        public List<ActionEntity> Actions { get; set; } = new();
+
+        public List<TaskEntity> Tasks { get; set; } = new();
         public List<ProjectEngineerAssignment> EngineerAssignments { get; set; } = new();
     }
 }

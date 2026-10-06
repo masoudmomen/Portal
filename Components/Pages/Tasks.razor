@@ -135,7 +135,7 @@
                     <label class="form-label fw-medium small">Priority</label>
                     <select class="form-select border-0 bg-light rounded-3" @bind="selectedPriority">
                         <option value="All">All Priorities</option>
-                        @foreach (var prio in Enum.GetValues<EnumsClass.ActionPriority>())
+                    @foreach (var prio in Enum.GetValues<EnumsClass.TaskPriority>())
                         {
                             <option value="@prio">@prio</option>
                         }
@@ -371,7 +371,7 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Priority</label>
                             <select class="form-select rounded-3 shadow-none border-light-subtle bg-light" @bind="taskForm.Priority">
-                                @foreach (var prio in Enum.GetValues<EnumsClass.ActionPriority>())
+                                @foreach (var prio in Enum.GetValues<EnumsClass.TaskPriority>())
                                 {
                                     <option value="@prio">@prio</option>
                                 }
@@ -464,7 +464,7 @@
         {
             DueDate = DateTime.Today.AddDays(7),
             Status = EnumsClass.TaskStatus.New,
-            Priority = EnumsClass.ActionPriority.Medium,
+            Priority = EnumsClass.TaskPriority.Medium,
             ProjectName = projects.First(),
             AssignedTo = assignees.First()
         };
@@ -561,15 +561,14 @@
         EnumsClass.TaskStatus.New => "bg-secondary-subtle text-secondary",
         EnumsClass.TaskStatus.InProgress => "bg-warning-subtle text-warning-emphasis",
         EnumsClass.TaskStatus.Completed => "bg-success-subtle text-success",
-        EnumsClass.TaskStatus.Blocked => "bg-danger-subtle text-danger",
         _ => "bg-light text-dark"
     };
 
-    private string GetPriorityBadgeClass(EnumsClass.ActionPriority p) => p switch
+    private string GetPriorityBadgeClass(EnumsClass.TaskPriority p) => p switch
     {
-        EnumsClass.ActionPriority.Critical => "bg-danger text-white",
-        EnumsClass.ActionPriority.High => "bg-danger-subtle text-danger",
-        EnumsClass.ActionPriority.Medium => "bg-primary-subtle text-primary",
+        EnumsClass.TaskPriority.Critical => "bg-danger text-white",
+        EnumsClass.TaskPriority.High => "bg-danger-subtle text-danger",
+        EnumsClass.TaskPriority.Medium => "bg-primary-subtle text-primary",
         _ => "bg-light text-dark"
     };
 
@@ -585,8 +584,8 @@
     {
         var list = new List<TaskItemModel>
         {
-            new() { Id = 1, ProjectName = "Corporate Portal", Title = "Initial Design System", Description = "Develop the main UI library.", AssignedTo = "Ali Ahmadi", DueDate = DateTime.Today.AddDays(2), Status = EnumsClass.TaskStatus.InProgress, Priority = EnumsClass.ActionPriority.High, Subtasks = new() { new() { Id = 101, Title = "Color Palette", IsDone = true }, new() { Id = 102, Title = "Typography", IsDone = false } } },
-            new() { Id = 2, ProjectName = "Engineering Dashboard", Title = "API Integration", Description = "Connect the charts to live data.", AssignedTo = "Sara Mohammadi", DueDate = DateTime.Today.AddDays(-1), Status = EnumsClass.TaskStatus.Blocked, Priority = EnumsClass.ActionPriority.Critical, Subtasks = new() { new() { Id = 103, Title = "Auth Setup", IsDone = false } } }
+            new() { Id = 1, ProjectName = "Corporate Portal", Title = "Initial Design System", Description = "Develop the main UI library.", AssignedTo = "Ali Ahmadi", DueDate = DateTime.Today.AddDays(2), Status = EnumsClass.TaskStatus.InProgress, Priority = EnumsClass.TaskPriority.High, Subtasks = new() { new() { Id = 101, Title = "Color Palette", IsDone = true }, new() { Id = 102, Title = "Typography", IsDone = false } } },
+            new() { Id = 2, ProjectName = "Engineering Dashboard", Title = "API Integration", Description = "Connect the charts to live data.", AssignedTo = "Sara Mohammadi", DueDate = DateTime.Today.AddDays(-1), Status = EnumsClass.TaskStatus.InProgress, Priority = EnumsClass.TaskPriority.Critical, Subtasks = new() { new() { Id = 103, Title = "Auth Setup", IsDone = false } } }
         };
         list.ForEach(UpdateTaskProgress);
         return list;
